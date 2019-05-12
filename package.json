@@ -1,0 +1,62 @@
+{
+  "name": "@swup/cli",
+  "description": "Create swup plugins and themes in seconds!",
+  "version": "0.1.0",
+  "author": {
+    "name": "Georgy Marchuk",
+    "email": "gmarcuk@gmail.com",
+    "url": "https://gmrchk.com/"
+  },
+  "bin": {
+    "swup": "./bin/run"
+  },
+  "bugs": "https://github.com/swup/cli/issues",
+  "dependencies": {
+    "@oclif/command": "^1.5.13",
+    "@oclif/config": "^1.13.0",
+    "@oclif/plugin-help": "^2.1.6",
+    "cli-spinner": "^0.2.10",
+    "git-clone": "^0.1.0",
+    "rimraf": "^2.6.3"
+  },
+  "devDependencies": {
+    "@oclif/dev-cli": "^1.22.0",
+    "@oclif/test": "^1.2.4",
+    "chai": "^4.2.0",
+    "eslint": "^5.16.0",
+    "eslint-config-oclif": "^3.1.0",
+    "globby": "^8.0.2",
+    "mocha": "^5.2.0",
+    "nyc": "^13.3.0"
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "files": [
+    "/bin",
+    "/npm-shrinkwrap.json",
+    "/oclif.manifest.json",
+    "/src"
+  ],
+  "homepage": "https://github.com/swup/cli",
+  "keywords": [
+    "oclif"
+  ],
+  "license": "MIT",
+  "main": "src/index.js",
+  "oclif": {
+    "commands": "./src/commands",
+    "bin": "swup",
+    "plugins": [
+      "@oclif/plugin-help"
+    ]
+  },
+  "repository": "swup/cli",
+  "scripts": {
+    "postpack": "rm -f oclif.manifest.json",
+    "posttest": "eslint .",
+    "prepack": "oclif-dev manifest && oclif-dev readme",
+    "test": "nyc mocha --forbid-only \"test/**/*.test.js\"",
+    "version": "oclif-dev readme && git add README.md"
+  }
+}
