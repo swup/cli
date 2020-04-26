@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+require = require('esm')(module)
 require('@oclif/command').run()
-.then(require('@oclif/command/flush'))
-.catch(require('@oclif/errors/handle'))
+    .then(require('@oclif/command/flush'))
+    .catch(require('@oclif/errors/handle'))

@@ -19,7 +19,7 @@ $ npm install -g @swup/cli
 $ swup COMMAND
 running command...
 $ swup (-v|--version|version)
-@swup/cli/0.1.0 darwin-x64 node-v10.13.0
+@swup/cli/0.3.0 darwin-x64 node-v10.15.3
 $ swup --help [COMMAND]
 USAGE
   $ swup COMMAND
@@ -30,6 +30,7 @@ USAGE
 <!-- commands -->
 * [`swup create`](#swup-create)
 * [`swup help [COMMAND]`](#swup-help-command)
+* [`swup validate`](#swup-validate)
 
 ## `swup create`
 
@@ -45,7 +46,7 @@ OPTIONS
   -t, --type=plugin|theme  [default: plugin] Can choose to create theme instead.
 ```
 
-_See code: [src/commands/create.js](https://github.com/swup/cli/blob/v0.1.0/src/commands/create.js)_
+_See code: [src/commands/create.js](https://github.com/swup/cli/blob/v0.3.0/src/commands/create.js)_
 
 ## `swup help [COMMAND]`
 
@@ -63,4 +64,18 @@ OPTIONS
 ```
 
 _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v2.1.6/src/commands/help.ts)_
+
+## `swup validate`
+
+Validate your site pages.
+
+```
+USAGE
+  $ swup validate
+
+OPTIONS
+  -c, --config=config  [default: swup.config.js] Defines name of swup config file.
+```
+
+_See code: [src/commands/validate.js](https://github.com/swup/cli/blob/v0.3.0/src/commands/validate.js)_
 <!-- commandsstop -->
