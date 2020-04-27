@@ -19,7 +19,7 @@ $ npm install -g @swup/cli
 $ swup COMMAND
 running command...
 $ swup (-v|--version|version)
-@swup/cli/0.3.0 darwin-x64 node-v10.15.3
+@swup/cli/0.3.1 darwin-x64 node-v10.15.3
 $ swup --help [COMMAND]
 USAGE
   $ swup COMMAND
@@ -46,7 +46,7 @@ OPTIONS
   -t, --type=plugin|theme  [default: plugin] Can choose to create theme instead.
 ```
 
-_See code: [src/commands/create.js](https://github.com/swup/cli/blob/v0.3.0/src/commands/create.js)_
+_See code: [src/commands/create.js](https://github.com/swup/cli/blob/v0.3.1/src/commands/create.js)_
 
 ## `swup help [COMMAND]`
 
@@ -77,5 +77,5 @@ OPTIONS
   -c, --config=config  [default: swup.config.js] Defines name of swup config file.
 ```
 
-_See code: [src/commands/validate.js](https://github.com/swup/cli/blob/v0.3.0/src/commands/validate.js)_
+_See code: [src/commands/validate.js](https://github.com/swup/cli/blob/v0.3.1/src/commands/validate.js)_
 <!-- commandsstop -->

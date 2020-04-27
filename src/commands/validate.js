@@ -1,7 +1,7 @@
 require = require('esm')(module)
 
 const {prepareChrome} = require('../chrome')
-const {Log, isUrl} = require('../utils')
+const {asyncForEach, Log, isUrl} = require('../utils')
 
 const {Command, flags} = require('@oclif/command/lib')
 const fs = require('fs')
@@ -68,7 +68,8 @@ class ValidateCommand extends Command {
             const urlsToCheck = await getUrlsToCheck()
 
             logger.group(`Validating using ${config.validate.sitemap ? `sitemap ${config.validate.sitemap}` : 'provided URLs'}`)
-            await Promise.all(urlsToCheck.map(async url => {
+
+            await asyncForEach(urlsToCheck, async url => {
                 const page = await visitPage(url)
 
                 errors.push(await validateNumberOfContainers(page, url, correctNumberOfContainers, config.swupOptions.containers))
@@ -76,7 +77,7 @@ class ValidateCommand extends Command {
                 errors.push(await validateTransitionStyles(page, url, config.swupOptions.animationSelector, config.validate.stylesExpectedToChange))
 
                 logger.log(`Checked url ${info(url)}`)
-            }))
+            })
 
             killChrome()
 
