@@ -54,13 +54,21 @@ class ValidateCommand extends Command {
             logger.log('Getting main page to validate against')
             const page = await visitPage(config.validate.against)
             const correctNumberOfContainers = await getNumberOfContainers(page, config.swupOptions.containers)
+            let source = ''
             const getUrlsToCheck = async () => {
                 if (config.validate.urls) {
+                    source = 'provided URLs'
                     return config.validate.urls
+                }
+
+                if (flags.testUrl) {
+                    source = 'single CLI testUrl option'
+                    return [flags.testUrl]
                 }
 
                 if (config.validate.sitemap) {
                     let sitemap
+                    source = `sitemap ${config.validate.sitemap}`
 
                     if (isUrl(config.validate.sitemap)) {
                         sitemap = await (fetch(config.validate.sitemap).then(res => res.text()))
@@ -75,7 +83,7 @@ class ValidateCommand extends Command {
             }
             const urlsToCheck = await getUrlsToCheck()
 
-            logger.group(`Validating using ${config.validate.sitemap ? `sitemap ${config.validate.sitemap}` : 'provided URLs'}`)
+            logger.group(`Validating using ${source}`)
 
             await asyncForEach(urlsToCheck, async url => {
                 const page = await visitPage(url)
@@ -117,6 +125,12 @@ ValidateCommand.flags = {
         description: 'Defines name of swup config file.',
         required: false,
         default: 'swup.config.js',
+    }),
+    testUrl: flags.string({
+        char: 't',
+        description: 'Allows running single test.',
+        required: false,
+        default: null,
     }),
 }
 
