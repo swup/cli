@@ -1,7 +1,7 @@
 const puppeteer = require('puppeteer')
 
 export const prepareChrome = async () => {
-    const browser = await puppeteer.launch()
+    const browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']})
 
     const visitPage = async url => {
         const page = await browser.newPage()
