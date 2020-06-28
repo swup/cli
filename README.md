@@ -1,7 +1,7 @@
 @swup/cli
 =========
 
-Create swup plugins and themes in seconds!
+Create swup plugins and themes in seconds, or validate your website.
 
 [![oclif](https://img.shields.io/badge/cli-oclif-brightgreen.svg)](https://oclif.io)
 [![Version](https://img.shields.io/npm/v/@swup/cli.svg)](https://npmjs.org/package/@swup/cli)
