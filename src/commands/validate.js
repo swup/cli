@@ -7,15 +7,23 @@ const {Command, flags} = require('@oclif/command/lib')
 const fs = require('fs')
 const path = require('path')
 const info = require('chalk/source').cyan
+const labelPass = require('chalk/source').bgGreen
+const labelFail = require('chalk/source').bgRed
+const labelRunning = require('chalk/source').bgYellow
+const black = require('chalk/source').black
 const parser = require('xml2json')
 const fetch = require('node-fetch')
 const {promisify} = require('util')
 const {exit} = process
 const readFile = promisify(fs.readFile)
 
+const FAIL = labelFail(black(' FAIL '))
+const PASS = labelPass(black(' PASS '))
+const RUNNING = labelRunning(black(' RUNNING '))
+
 class ValidateCommand extends Command {
     async run() {
-        const errors = []
+        let errors = []
         const {flags} = this.parse(ValidateCommand)
         const logger = new Log()
 
@@ -71,12 +79,17 @@ class ValidateCommand extends Command {
 
             await asyncForEach(urlsToCheck, async url => {
                 const page = await visitPage(url)
+                const pageErrors = []
 
-                errors.push(await validateNumberOfContainers(page, url, correctNumberOfContainers, config.swupOptions.containers))
-                errors.push(await validateTransitionDurationStyles(page, url, config.swupOptions.animationSelector))
-                errors.push(await validateTransitionStyles(page, url, config.swupOptions.animationSelector, config.validate.stylesExpectedToChange))
+                logger.temporaryLog(`Testing url ${info(url)} ${RUNNING}`)
 
-                logger.log(`Checked url ${info(url)}`)
+                pageErrors.push(await validateNumberOfContainers(page, url, correctNumberOfContainers, config.swupOptions.containers))
+                pageErrors.push(await validateTransitionDurationStyles(page, url, config.swupOptions.animationSelector))
+                pageErrors.push(await validateTransitionStyles(page, url, config.swupOptions.animationSelector, config.validate.stylesExpectedToChange))
+
+                logger.removeTemporaryLog(`Testing url ${info(url)} ${pageErrors.filter(el => (el !== undefined)).length === 0 ? PASS : FAIL}`)
+
+                errors = errors.concat(pageErrors)
             })
 
             killChrome()

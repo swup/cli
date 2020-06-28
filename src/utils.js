@@ -52,4 +52,14 @@ export class Log {
             logger.success('All validations PASSED')
         }
     }
+
+    temporaryLog(text, color = normal, level = 1) {
+        process.stdout.write(color(`${'  '.repeat(level)}${text}`))
+    }
+
+    removeTemporaryLog(text) {
+        process.stdout.clearLine()
+        process.stdout.cursorTo(0)
+        this.log(text)
+    }
 }
