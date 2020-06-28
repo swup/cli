@@ -91,9 +91,18 @@ class ValidateCommand extends Command {
 
                 logger.temporaryLog(`Testing url ${info(url)} ${RUNNING}`)
 
-                pageErrors.push(await validateNumberOfContainers(page, url, correctNumberOfContainers, config.swupOptions.containers))
-                pageErrors.push(await validateTransitionDurationStyles(page, url, config.swupOptions.animationSelector))
-                pageErrors.push(await validateTransitionStyles(page, url, config.swupOptions.animationSelector, config.validate.stylesExpectedToChange))
+
+                if (flags.runTests === 'containers') {
+                    pageErrors.push(await validateNumberOfContainers(page, url, correctNumberOfContainers, config.swupOptions.containers))
+                } else if (flags.runTests === 'transition-duration') {
+                    pageErrors.push(await validateTransitionDurationStyles(page, url, config.swupOptions.animationSelector))
+                } else if (flags.runTests === 'transition-styles') {
+                    pageErrors.push(await validateTransitionStyles(page, url, config.swupOptions.animationSelector, config.validate.stylesExpectedToChange))
+                } else {
+                    pageErrors.push(await validateNumberOfContainers(page, url, correctNumberOfContainers, config.swupOptions.containers))
+                    pageErrors.push(await validateTransitionDurationStyles(page, url, config.swupOptions.animationSelector))
+                    pageErrors.push(await validateTransitionStyles(page, url, config.swupOptions.animationSelector, config.validate.stylesExpectedToChange))
+                }
 
                 logger.removeTemporaryLog(`Testing url ${info(url)} ${pageErrors.filter(el => (el !== undefined)).length === 0 ? PASS : FAIL}`)
 
@@ -131,6 +140,13 @@ ValidateCommand.flags = {
         description: 'Allows running single test.',
         required: false,
         default: null,
+    }),
+    runTests: flags.string({
+        char: 'r',
+        description: 'Run only specific test',
+        required: false,
+        default: 'all',
+        options: ['all', 'containers', 'transition-duration', 'transition-styles'],
     }),
 }
 
