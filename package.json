@@ -1,7 +1,7 @@
 {
   "name": "@swup/cli",
   "description": "Create swup plugins and themes in seconds, or validate your website.",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "author": {
     "name": "Georgy Marchuk",
     "email": "gmarcuk@gmail.com",
@@ -20,6 +20,7 @@
     "chrome-remote-interface": "^0.28.1",
     "cli-spinner": "^0.2.10",
     "cli-spinners": "^2.3.0",
+    "crawler": "^1.2.2",
     "esm": "^3.2.25",
     "git-clone": "^0.1.0",
     "node-fetch": "^2.6.0",

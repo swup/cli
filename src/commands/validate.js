@@ -2,6 +2,8 @@ require = require('esm')(module)
 
 const {prepareChrome} = require('../chrome')
 const {asyncForEach, Log, isUrl} = require('../utils')
+const Crawler = require('crawler')
+
 
 const {Command, flags} = require('@oclif/command/lib')
 const fs = require('fs')
@@ -66,6 +68,41 @@ class ValidateCommand extends Command {
                     return [flags.testUrl]
                 }
 
+                if (flags.findUrls) {
+                    logger.group(`Crawling site ${flags.findUrls}`)
+                    const urlsToCheck = await new Promise(resolve => {
+                        let urls = []
+                        const origin = new URL(config.validate.against).origin;
+                        const crawler = new Crawler({
+                            maxConnections: 10,
+                            skipDuplicates: true,
+                            // This will be called for each crawled page
+                            callback: function (error, res, done) {
+                                if (error) {
+                                    console.log(error)
+                                }
+
+                                urls.push(res.request.uri.href)
+
+                                const $ = res.$
+                                $('a').each(function () {
+                                    if ($(this).attr('href').startsWith(origin)) {
+                                        crawler.queue($(this).attr('href'))
+                                    }
+                                })
+
+                                setTimeout(done) // I guess jQuery dom reading is slow?
+                            },
+                        })
+
+                        crawler.queue(flags.findUrls)
+                        crawler.on('drain', () => resolve(urls))
+                    })
+
+                    source = 'crawled site URLs'
+                    return urlsToCheck
+                }
+
                 if (config.validate.sitemap) {
                     let sitemap
                     source = `sitemap ${config.validate.sitemap}`
@@ -90,7 +127,6 @@ class ValidateCommand extends Command {
                 const pageErrors = []
 
                 logger.temporaryLog(`Testing url ${info(url)} ${RUNNING}`)
-
 
                 if (flags.runTests === 'containers') {
                     pageErrors.push(await validateNumberOfContainers(page, url, correctNumberOfContainers, config.swupOptions.containers))
@@ -147,6 +183,12 @@ ValidateCommand.flags = {
         required: false,
         default: 'all',
         options: ['all', 'containers', 'transition-duration', 'transition-styles'],
+    }),
+    findUrls: flags.string({
+        char: 'f',
+        description: 'Crawl site and find URLs to check automatically (page that are not linked from other pages, like 404, won\'t be checked)',
+        required: false,
+        default: null,
     }),
 }
 
