@@ -55,7 +55,7 @@ class ValidateCommand extends Command {
 
             logger.log('Getting main page to validate against')
             const page = await visitPage(config.validate.against)
-            const correctNumberOfContainers = await getNumberOfContainers(page, config.swupOptions.containers)
+            const correctNumberOfContainers = await getNumberOfContainers(page, config.swup.containers)
             let source = ''
             const getUrlsToCheck = async () => {
                 if (config.validate.urls) {
@@ -146,15 +146,15 @@ class ValidateCommand extends Command {
                 logger.temporaryLog(`Testing url ${info(url)} ${RUNNING}`)
 
                 if (flags.runTests === 'containers') {
-                    pageErrors.push(await validateNumberOfContainers(page, url, correctNumberOfContainers, config.swupOptions.containers))
+                    pageErrors.push(await validateNumberOfContainers(page, url, correctNumberOfContainers, config.swup.containers))
                 } else if (flags.runTests === 'transition-duration') {
-                    pageErrors.push(await validateTransitionDurationStyles(page, url, config.swupOptions.animationSelector))
+                    pageErrors.push(await validateTransitionDurationStyles(page, url, config.swup.animationSelector))
                 } else if (flags.runTests === 'transition-styles') {
-                    pageErrors.push(await validateTransitionStyles(page, url, config.swupOptions.animationSelector, config.validate.stylesExpectedToChange))
+                    pageErrors.push(await validateTransitionStyles(page, url, config.swup.animationSelector, config.validate.stylesExpectedToChange))
                 } else {
-                    pageErrors.push(await validateNumberOfContainers(page, url, correctNumberOfContainers, config.swupOptions.containers))
-                    pageErrors.push(await validateTransitionDurationStyles(page, url, config.swupOptions.animationSelector))
-                    pageErrors.push(await validateTransitionStyles(page, url, config.swupOptions.animationSelector, config.validate.stylesExpectedToChange))
+                    pageErrors.push(await validateNumberOfContainers(page, url, correctNumberOfContainers, config.swup.containers))
+                    pageErrors.push(await validateTransitionDurationStyles(page, url, config.swup.animationSelector))
+                    pageErrors.push(await validateTransitionStyles(page, url, config.swup.animationSelector, config.validate.stylesExpectedToChange))
                 }
 
                 logger.removeTemporaryLog(`Testing url ${info(url)} ${pageErrors.filter(el => (el !== undefined)).length === 0 ? PASS : FAIL}`)
