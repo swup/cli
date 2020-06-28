@@ -137,7 +137,7 @@ ValidateCommand.flags = {
     }),
     testUrl: flags.string({
         char: 't',
-        description: 'Allows running single test.',
+        description: 'Run tests for single URL.',
         required: false,
         default: null,
     }),
