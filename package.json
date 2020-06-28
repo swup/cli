@@ -1,7 +1,7 @@
 {
   "name": "@swup/cli",
   "description": "Create swup plugins and themes in seconds, or validate your website.",
-  "version": "0.3.4",
+  "version": "4.0.0",
   "author": {
     "name": "Georgy Marchuk",
     "email": "gmarcuk@gmail.com",
