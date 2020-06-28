@@ -3,7 +3,7 @@ const error = require('chalk/source').red
 const info = require('chalk/source').cyan
 const success = require('chalk/source').green
 
-export const forEach = async (array, callback) => {
+export const syncForEach = async (array, callback) => {
     for (let index = 0; index < array.length; index++) {
         await callback(array[index], false)
     }

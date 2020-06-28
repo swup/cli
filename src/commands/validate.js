@@ -1,7 +1,7 @@
 require = require('esm')(module)
 
 const {prepareChrome} = require('../chrome')
-const {asyncForEach, forEach, Log, isUrl} = require('../utils')
+const {asyncForEach, syncForEach, Log, isUrl} = require('../utils')
 const Crawler = require('crawler')
 
 const {Command, flags} = require('@oclif/command/lib')
@@ -148,7 +148,7 @@ class ValidateCommand extends Command {
 
             logger.group(`Validating using ${source}`)
 
-            const loop = flags.asynchronous ? asyncForEach : forEach;
+            const loop = flags.asynchronous ? asyncForEach : syncForEach
 
             await loop(urlsToCheck, async (url, async) => {
                 const page = await visitPage(url)
