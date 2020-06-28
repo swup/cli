@@ -1,9 +1,8 @@
 require = require('esm')(module)
 
 const {prepareChrome} = require('../chrome')
-const {asyncForEach, Log, isUrl} = require('../utils')
+const {asyncForEach, forEach, Log, isUrl} = require('../utils')
 const Crawler = require('crawler')
-
 
 const {Command, flags} = require('@oclif/command/lib')
 const fs = require('fs')
@@ -149,11 +148,15 @@ class ValidateCommand extends Command {
 
             logger.group(`Validating using ${source}`)
 
-            await asyncForEach(urlsToCheck, async url => {
+            const loop = flags.asynchronous ? asyncForEach : forEach;
+
+            await loop(urlsToCheck, async (url, async) => {
                 const page = await visitPage(url)
                 const pageErrors = []
 
-                logger.temporaryLog(`Testing url ${info(url)} ${RUNNING}`)
+                if (!async) {
+                    logger.temporaryLog(`Testing url ${info(url)} ${RUNNING}`)
+                }
 
                 if (flags.runTests === 'containers') {
                     pageErrors.push(await validateNumberOfContainers(page, url, correctNumberOfContainers, config.swup.containers))
@@ -167,7 +170,12 @@ class ValidateCommand extends Command {
                     pageErrors.push(await validateTransitionStyles(page, url, config.swup.animationSelector, config.validate.stylesExpectedToChange))
                 }
 
-                logger.removeTemporaryLog(`Testing url ${info(url)} ${pageErrors.filter(el => (el !== undefined)).length === 0 ? PASS : FAIL}`)
+                const report = `Testing url ${info(url)} ${pageErrors.filter(el => (el !== undefined)).length === 0 ? PASS : FAIL}`;
+                if (async) {
+                    logger.log(report)
+                } else {
+                    logger.removeTemporaryLog(report)
+                }
 
                 errors = errors.concat(pageErrors)
             })
@@ -234,6 +242,12 @@ ValidateCommand.flags = {
         description: 'Sitemap file',
         required: false,
         default: 'public/sitemap.xml',
+    }),
+    asynchronous: flags.boolean({
+        char: 'a',
+        description: 'Execute all tests asynchronously at once (around 5x faster, but might cause problems)',
+        required: false,
+        default: false,
     }),
 }
 

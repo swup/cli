@@ -3,10 +3,14 @@ const error = require('chalk/source').red
 const info = require('chalk/source').cyan
 const success = require('chalk/source').green
 
-export const asyncForEach = async (array, callback) => {
+export const forEach = async (array, callback) => {
     for (let index = 0; index < array.length; index++) {
-        await callback(array[index], index, array)
+        await callback(array[index], false)
     }
+}
+
+export const asyncForEach = async (array, callback) => {
+    return Promise.all(array.map(i => callback(i, true)))
 }
 
 export const isUrl = str => str.startsWith('http')
