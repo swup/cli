@@ -30,19 +30,28 @@ class ValidateCommand extends Command {
         const logger = new Log()
 
         try {
+            let config = {}
             const configExists = fs.existsSync(path.join(process.cwd(), flags.config))
-            if (!configExists) {
-                throw new Error('Swup project config not found.')
+            const configFile = configExists && require(path.join(process.cwd(), flags.config))
+            if (configExists && !configFile.default && typeof configFile.default === 'object') {
+                throw new Error('Swup project config default export is not a valid object.')
             }
 
-            const configFile = require(path.join(process.cwd(), flags.config))
-            if (!configFile.default) {
-                throw new Error('Swup project config has no default export.')
+            const fileConfig = configFile.default || {}
+            config = {
+                swup: {
+                    animationSelector: flags.animationSelector,
+                    containers: flags.containers.split(','),
+                    ...fileConfig.swup,
+                },
+                validate: {
+                    stylesExpectedToChange: flags.stylesExpectedToChange.split(','),
+                    sitemap: flags.sitemap,
+                    ...fileConfig.validate,
+                },
             }
 
-            const config = configFile.default
             logger.group('Preparing')
-
             logger.log('Waiting for Chrome to be ready')
             const {
                 visitPage,
@@ -197,7 +206,7 @@ ValidateCommand.flags = {
     }),
     runTests: flags.string({
         char: 'r',
-        description: 'Run only specific test',
+        description: 'Run only specific test.',
         required: false,
         default: 'all',
         options: ['all', 'containers', 'transition-duration', 'transition-styles'],
@@ -207,6 +216,24 @@ ValidateCommand.flags = {
         description: 'Crawl site and find URLs to check automatically (page that are not linked from other pages, like 404, won\'t be checked)',
         required: false,
         default: null,
+    }),
+    containers: flags.string({
+        char: 'o',
+        description: 'Container selectors separated by a comma (,)',
+        required: false,
+        default: '#swup',
+    }),
+    stylesExpectedToChange: flags.string({
+        char: 's',
+        description: 'Styles expected to change separated by a comma (,)',
+        required: false,
+        default: 'opacity,transform',
+    }),
+    sitemap: flags.string({
+        char: 'm',
+        description: 'Sitemap file',
+        required: false,
+        default: 'public/sitemap.xml',
     }),
 }
 
