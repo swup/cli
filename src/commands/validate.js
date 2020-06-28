@@ -76,18 +76,35 @@ class ValidateCommand extends Command {
                         const crawler = new Crawler({
                             maxConnections: 10,
                             skipDuplicates: true,
-                            // This will be called for each crawled page
                             callback: function (error, res, done) {
                                 if (error) {
                                     console.log(error)
                                 }
 
+                                if (!res.$) {
+                                    done()
+                                    return
+                                }
+
                                 urls.push(res.request.uri.href)
 
                                 const $ = res.$
-                                $('a').each(function () {
-                                    if ($(this).attr('href').startsWith(origin)) {
-                                        crawler.queue($(this).attr('href'))
+                                $('a[href]').each(function () {
+                                    const href = $(this).attr('href')
+
+                                    if (!href) {
+                                        done()
+                                        return false
+                                    }
+
+                                    if (!new RegExp('.(gif|jpg|png|bmp|jpeg|pdf)$', 'i').test(href)) {
+                                        if (href.startsWith('http')) {
+                                            if (href.startsWith(origin)) {
+                                                crawler.queue(href)
+                                            }
+                                        } else if (href.startsWith('/')) {
+                                            crawler.queue(new URL(`${origin}${href}`).href)
+                                        }
                                     }
                                 })
 
