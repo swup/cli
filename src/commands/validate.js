@@ -53,9 +53,6 @@ class ValidateCommand extends Command {
                 killChrome,
             } = await prepareChrome()
 
-            logger.log('Getting main page to validate against')
-            const page = await visitPage(config.validate.against)
-            const correctNumberOfContainers = await getNumberOfContainers(page, config.swup.containers)
             let source = ''
             const getUrlsToCheck = async () => {
                 if (config.validate.urls) {
@@ -72,7 +69,7 @@ class ValidateCommand extends Command {
                     logger.group(`Crawling site ${flags.findUrls}`)
                     const urlsToCheck = await new Promise(resolve => {
                         let urls = []
-                        const origin = new URL(config.validate.against).origin;
+                        const origin = new URL(flags.findUrls).origin;
                         const crawler = new Crawler({
                             maxConnections: 10,
                             skipDuplicates: true,
@@ -136,6 +133,10 @@ class ValidateCommand extends Command {
                 throw new Error('Swup project config not found.')
             }
             const urlsToCheck = await getUrlsToCheck()
+
+            logger.log('Getting first page to validate against')
+            const page = await visitPage(urlsToCheck[0])
+            const correctNumberOfContainers = await getNumberOfContainers(page, config.swup.containers)
 
             logger.group(`Validating using ${source}`)
 
