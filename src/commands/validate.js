@@ -202,7 +202,7 @@ ValidateCommand.description = 'Validate your site pages.'
 ValidateCommand.flags = {
     config: flags.string({
         char: 'c',
-        description: 'Defines name of swup config file.',
+        description: 'Defines path of swup config file.',
         required: false,
         default: 'swup.config.js',
     }),
@@ -221,7 +221,7 @@ ValidateCommand.flags = {
     }),
     findUrls: flags.string({
         char: 'f',
-        description: 'Crawl site and find URLs to check automatically (page that are not linked from other pages, like 404, won\'t be checked)',
+        description: 'Crawl site based on defined base URL and find URLs to check automatically (pages that are not linked from other pages, like 404, won\'t be checked)',
         required: false,
         default: null,
     }),
@@ -239,7 +239,7 @@ ValidateCommand.flags = {
     }),
     sitemap: flags.string({
         char: 'm',
-        description: 'Sitemap file',
+        description: 'Sitemap file (accepts file path or URL)',
         required: false,
         default: 'public/sitemap.xml',
     }),

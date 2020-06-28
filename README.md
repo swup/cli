@@ -74,14 +74,27 @@ USAGE
   $ swup validate
 
 OPTIONS
-  -c, --config=config                                                  [default: swup.config.js] Defines name of swup
+  -a, --asynchronous                                                   Execute all tests asynchronously at once (around
+                                                                       5x faster, but might cause problems)
+
+  -c, --config=config                                                  [default: swup.config.js] Defines path of swup
                                                                        config file.
 
-  -f, --findUrls=findUrls                                              Crawl site and find URLs to check automatically
-                                                                       (page that are not linked from other pages, like
-                                                                       404, won't be checked)
+  -f, --findUrls=findUrls                                              Crawl site based on defined base URL and find
+                                                                       URLs to check automatically (pages that are not
+                                                                       linked from other pages, like 404, won't be
+                                                                       checked)
 
-  -r, --runTests=all|containers|transition-duration|transition-styles  [default: all] Run only specific test
+  -m, --sitemap=sitemap                                                [default: public/sitemap.xml] Sitemap file
+                                                                       (accepts file path or URL)
+
+  -o, --containers=containers                                          [default: #swup] Container selectors separated by
+                                                                       a comma (,)
+
+  -r, --runTests=all|containers|transition-duration|transition-styles  [default: all] Run only specific test.
+
+  -s, --stylesExpectedToChange=stylesExpectedToChange                  [default: opacity,transform] Styles expected to
+                                                                       change separated by a comma (,)
 
   -t, --testUrl=testUrl                                                Run tests for single URL.
 ```
