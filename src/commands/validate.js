@@ -49,6 +49,7 @@ class ValidateCommand extends Command {
                     asynchronous: flags.asynchronous,
                     baseUrl: flags.baseUrl,
                     runTests: flags.runTests,
+                    testUrl: flags.testUrl,
                     ...fileConfig.validate,
                 },
             }
@@ -71,9 +72,9 @@ class ValidateCommand extends Command {
                     return config.validate.urls
                 }
 
-                if (flags.testUrl) {
+                if (config.validate.testUrl) {
                     source = 'single CLI testUrl option'
-                    return [flags.testUrl]
+                    return [config.validate.testUrl]
                 }
 
                 if (config.validate.baseUrl) {
@@ -210,7 +211,7 @@ ValidateCommand.flags = {
         default: 'swup.config.js',
     }),
     testUrl: flags.string({
-        char: 't',
+        char: 'u',
         description: 'Run tests for single URL.',
         required: false,
         default: null,
