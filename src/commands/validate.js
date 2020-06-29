@@ -46,6 +46,7 @@ class ValidateCommand extends Command {
                 validate: {
                     stylesExpectedToChange: flags.stylesExpectedToChange.split(','),
                     sitemap: flags.sitemap,
+                    asynchronous: flags.asynchronous,
                     ...fileConfig.validate,
                 },
             }
@@ -148,7 +149,7 @@ class ValidateCommand extends Command {
 
             logger.group(`Validating using ${source}`)
 
-            const loop = flags.asynchronous ? asyncForEach : syncForEach
+            const loop = config.validate.asynchronous ? asyncForEach : syncForEach
 
             await loop(urlsToCheck, async (url, async) => {
                 const page = await visitPage(url)
