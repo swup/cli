@@ -48,6 +48,7 @@ class ValidateCommand extends Command {
                     sitemap: flags.sitemap,
                     asynchronous: flags.asynchronous,
                     baseUrl: flags.baseUrl,
+                    runTests: flags.runTests,
                     ...fileConfig.validate,
                 },
             }
@@ -160,11 +161,11 @@ class ValidateCommand extends Command {
                     logger.temporaryLog(`Testing url ${info(url)} ${RUNNING}`)
                 }
 
-                if (flags.runTests === 'containers') {
+                if (config.validate.runTests === 'containers') {
                     pageErrors.push(await validateNumberOfContainers(page, url, correctNumberOfContainers, config.swup.containers))
-                } else if (flags.runTests === 'transition-duration') {
+                } else if (config.validate.runTests === 'transition-duration') {
                     pageErrors.push(await validateTransitionDurationStyles(page, url, config.swup.animationSelector))
-                } else if (flags.runTests === 'transition-styles') {
+                } else if (config.validate.runTests === 'transition-styles') {
                     pageErrors.push(await validateTransitionStyles(page, url, config.swup.animationSelector, config.validate.stylesExpectedToChange))
                 } else {
                     pageErrors.push(await validateNumberOfContainers(page, url, correctNumberOfContainers, config.swup.containers))
@@ -215,7 +216,7 @@ ValidateCommand.flags = {
         default: null,
     }),
     runTests: flags.string({
-        char: 'r',
+        char: 't',
         description: 'Run only specific test.',
         required: false,
         default: 'all',
