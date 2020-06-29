@@ -47,6 +47,7 @@ class ValidateCommand extends Command {
                     stylesExpectedToChange: flags.stylesExpectedToChange.split(','),
                     sitemap: flags.sitemap,
                     asynchronous: flags.asynchronous,
+                    baseUrl: flags.baseUrl,
                     ...fileConfig.validate,
                 },
             }
@@ -74,11 +75,11 @@ class ValidateCommand extends Command {
                     return [flags.testUrl]
                 }
 
-                if (flags.findUrls) {
-                    logger.log(`Crawling site ${flags.findUrls}`)
+                if (config.validate.baseUrl) {
+                    logger.log(`Crawling site ${config.validate.baseUrl}`)
                     const urlsToCheck = await new Promise(resolve => {
                         let urls = []
-                        const origin = new URL(flags.findUrls).origin;
+                        const origin = new URL(config.validate.baseUrl).origin;
                         const crawler = new Crawler({
                             maxConnections: 10,
                             skipDuplicates: true,
@@ -118,7 +119,7 @@ class ValidateCommand extends Command {
                             },
                         })
 
-                        crawler.queue(flags.findUrls)
+                        crawler.queue(config.validate.baseUrl)
                         crawler.on('drain', () => resolve(urls))
                     })
 
@@ -220,8 +221,8 @@ ValidateCommand.flags = {
         default: 'all',
         options: ['all', 'containers', 'transition-duration', 'transition-styles'],
     }),
-    findUrls: flags.string({
-        char: 'f',
+    baseUrl: flags.string({
+        char: 'b',
         description: 'Crawl site based on defined base URL and find URLs to check automatically (pages that are not linked from other pages, like 404, won\'t be checked)',
         required: false,
         default: null,
