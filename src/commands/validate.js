@@ -74,7 +74,7 @@ class ValidateCommand extends Command {
                 }
 
                 if (flags.findUrls) {
-                    logger.group(`Crawling site ${flags.findUrls}`)
+                    logger.log(`Crawling site ${flags.findUrls}`)
                     const urlsToCheck = await new Promise(resolve => {
                         let urls = []
                         const origin = new URL(flags.findUrls).origin;
