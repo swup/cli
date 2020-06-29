@@ -19,7 +19,7 @@ $ npm install -g @swup/cli
 $ swup COMMAND
 running command...
 $ swup (-v|--version|version)
-@swup/cli/0.3.4 darwin-x64 node-v10.15.3
+@swup/cli/4.0.2 darwin-x64 node-v10.15.3
 $ swup --help [COMMAND]
 USAGE
   $ swup COMMAND
@@ -46,7 +46,7 @@ OPTIONS
   -t, --type=plugin|theme  [default: plugin] Can choose to create theme instead.
 ```
 
-_See code: [src/commands/create.js](https://github.com/swup/cli/blob/v0.3.4/src/commands/create.js)_
+_See code: [src/commands/create.js](https://github.com/swup/cli/blob/v4.0.2/src/commands/create.js)_
 
 ## `swup help [COMMAND]`
 
@@ -77,13 +77,13 @@ OPTIONS
   -a, --asynchronous                                                   Execute all tests asynchronously at once (around
                                                                        5x faster, but might cause problems)
 
-  -c, --config=config                                                  [default: swup.config.js] Defines path of swup
-                                                                       config file.
-
-  -f, --findUrls=findUrls                                              Crawl site based on defined base URL and find
+  -b, --baseUrl=baseUrl                                                Crawl site based on defined base URL and find
                                                                        URLs to check automatically (pages that are not
                                                                        linked from other pages, like 404, won't be
                                                                        checked)
+
+  -c, --config=config                                                  [default: swup.config.js] Defines path of swup
+                                                                       config file.
 
   -m, --sitemap=sitemap                                                [default: public/sitemap.xml] Sitemap file
                                                                        (accepts file path or URL)
@@ -91,13 +91,13 @@ OPTIONS
   -o, --containers=containers                                          [default: #swup] Container selectors separated by
                                                                        a comma (,)
 
-  -r, --runTests=all|containers|transition-duration|transition-styles  [default: all] Run only specific test.
-
   -s, --stylesExpectedToChange=stylesExpectedToChange                  [default: opacity,transform] Styles expected to
                                                                        change separated by a comma (,)
 
-  -t, --testUrl=testUrl                                                Run tests for single URL.
+  -t, --runTests=all|containers|transition-duration|transition-styles  [default: all] Run only specific test.
+
+  -u, --testUrl=testUrl                                                Run tests for single URL.
 ```
 
-_See code: [src/commands/validate.js](https://github.com/swup/cli/blob/v0.3.4/src/commands/validate.js)_
+_See code: [src/commands/validate.js](https://github.com/swup/cli/blob/v4.0.2/src/commands/validate.js)_
 <!-- commandsstop -->
