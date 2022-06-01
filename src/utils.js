@@ -2,6 +2,7 @@ const normal = require('chalk/source').white
 const error = require('chalk/source').red
 const info = require('chalk/source').cyan
 const success = require('chalk/source').green
+const readline = require('readline')
 
 export const syncForEach = async (array, callback) => {
     for (let index = 0; index < array.length; index++) {
@@ -62,8 +63,8 @@ export class Log {
     }
 
     removeTemporaryLog(text) {
-        process.stdout.clearLine()
-        process.stdout.cursorTo(0)
+        readline.clearLine(process.stdout, 0)
+        readline.cursorTo(process.stdout, 0, null)
         this.log(text)
     }
 }
