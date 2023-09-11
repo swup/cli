@@ -2,7 +2,8 @@
   "compilerOptions": {
     "declaration": true,
     "importHelpers": true,
-    "module": "nodenext",
+    "module": "ES2020",
+    "moduleResolution": "NodeNext",
     "outDir": "dist",
     "rootDir": "src",
     "strict": true,
@@ -10,5 +11,8 @@
   },
   "include": [
     "src/**/*"
-  ]
+  ],
+  "ts-node": {
+    "esm": true
+  }
 }

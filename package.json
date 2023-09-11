@@ -9,7 +9,7 @@
     "url": "https://gmrchk.com/"
   },
   "bin": {
-    "swup": "./bin/run"
+    "swup": "./bin/run.js"
   },
   "homepage": "https://github.com/swup/cli",
   "license": "MIT",
@@ -24,13 +24,15 @@
   "dependencies": {
     "@oclif/core": "^2.0.0",
     "@oclif/plugin-help": "^5.0.0",
-    "git-clone": "^0.2.0",
+    "chalk": "^5.3.0",
     "listr2": "^6.6.1",
-    "lodash": "^4.17.21"
+    "lodash-es": "^4.17.21",
+    "rimraf": "^5.0.1"
   },
   "devDependencies": {
     "@oclif/test": "^2.5.3",
     "@types/chai": "^4.0.0",
+    "@types/lodash-es": "^4.17.9",
     "@types/mocha": "^9.0.0",
     "@types/node": "^16.18.50",
     "chai": "^4.0.0",
