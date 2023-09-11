@@ -87,7 +87,7 @@ export default class Create extends Command {
 		const tasks = [
 			{ title: 'Creating directory', task: this.createDirectory },
 			{ title: 'Cloning repository', task: this.cloneRepository },
-			{ title: 'Clearning git directory', task: this.clearGitDirectory },
+			{ title: 'Cleaning git directory', task: this.clearGitDirectory },
 			{ title: 'Updating package.json', task: this.updatePackageJson },
 			{ title: 'Updating plugin file', task: this.updatePluginFile },
 			{ title: 'Updating readme', task: this.updateReadme },
@@ -95,7 +95,7 @@ export default class Create extends Command {
 
 		try {
 			this.log(chalk`Creating {magenta ${type}} with name {green ${names.full}}...`)
-			await new Listr<Ctx>(tasks, { ctx, concurrent: false }).run()
+			await new Listr<Ctx>(tasks, { ctx }).run()
 			this.log(chalk`Created {green ${names.full}}`)
 		} catch (error) {
 			this.error(`${error}`)
@@ -120,7 +120,7 @@ export default class Create extends Command {
 
 	async clearGitDirectory(ctx: Ctx): Promise<void> {
 		if (!ctx.path) return
-		await rimraf(`${ctx.path}/.git`)
+		await rimraf(path.join(ctx.path, '.git'))
 	}
 
 	async cloneRepository(ctx: Ctx): Promise<void> {
@@ -133,20 +133,20 @@ export default class Create extends Command {
 		}
 	}
 
-	async updatePluginFile({ path, names }: { path: string, names: Names }) {
-		const pluginPath = `${path}/src/index.js`
+	async updatePluginFile(ctx: Ctx): Promise<void> {
+		const pluginPath = path.join(ctx.path, 'src/index.js')
 		try {
 			let data = await fs.readFile(pluginPath, 'utf8')
-			data = data.replace(/PluginName/g, names.short)
-			data = data.replace(/ThemeName/g, names.short)
+			data = data.replace(/PluginName/g, ctx.names.short)
+			data = data.replace(/ThemeName/g, ctx.names.short)
 			await fs.writeFile(pluginPath, data)
 		} catch (error) {
 			throw new Error(`Error updating plugin file: ${error}`)
 		}
 	}
 
-	async updatePackageJson({ path, names, repo }: { path: string, names: Names, repo?: string }): Promise<void> {
-		const packagePath = `${path}/package.json`
+	async updatePackageJson(ctx: Ctx): Promise<void> {
+		const packagePath = path.join(ctx.path, 'package.json')
 		let pckg: any
 		try {
 			pckg = JSON.parse(await fs.readFile(packagePath, 'utf8'))
@@ -154,14 +154,14 @@ export default class Create extends Command {
 			throw new Error(`Error reading package.json: ${error}`)
 		}
 
-		pckg.name = names.kebab
+		pckg.name = ctx.names.kebab
 		pckg.version = '0.0.0'
 		pckg.description = ''
 		pckg.author.name = ''
 		pckg.author.email = ''
 		pckg.author.url = ''
-		if (repo) {
-			pckg.repository.url = repo
+		if (ctx.repo) {
+			pckg.repository.url = ctx.repo
 		} else {
 			delete pckg.repository
 		}
@@ -173,15 +173,15 @@ export default class Create extends Command {
 		}
 	}
 
-	async updateReadme({ path, names }: { path: string, names: Names }): Promise<void> {
-		const readmePath = `${path}/readme.md`
+	async updateReadme(ctx: Ctx): Promise<void> {
+		const readmePath = path.join(ctx.path, 'readme.md')
 		try {
 			let data = await fs.readFile(readmePath, 'utf8')
 			data = data.replace(/ *\[comment\]: CLI-remove-start[\s\S]*\[comment\]: CLI-remove-end */g, '')
-			data = data.replace(/swup-\[(plugin-name|theme-name)\]-plugin/g, names.kebab)
-			data = data.replace(/ \[(Plugin Name|Theme Name)\]/g, names.title)
-			data = data.replace(/\[(PluginName|ThemeName)\]/g, names.pascal)
-			data = data.replace(/(SwupNamePlugin|SwupNameTheme)/g, names.full)
+			data = data.replace(/swup-\[(plugin-name|theme-name)\]-plugin/g, ctx.names.kebab)
+			data = data.replace(/ \[(Plugin Name|Theme Name)\]/g, ctx.names.title)
+			data = data.replace(/\[(PluginName|ThemeName)\]/g, ctx.names.pascal)
+			data = data.replace(/(SwupNamePlugin|SwupNameTheme)/g, ctx.names.full)
 			await fs.writeFile(readmePath, data)
 		} catch (error) {
 			throw new Error(`Error updating readme: ${error}`)
