@@ -11,6 +11,9 @@ A command-line interface (CLI) to aid in developing [swup](https://swup.js.org/)
 - Create plugins and themes from a template
 - Bundle plugins and themes using microbundle
 
+## Contents
+
+- [Installation](#installation)
 - [Usage](#usage)
 - [Commands](#commands)
 

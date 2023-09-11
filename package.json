@@ -1,6 +1,6 @@
 {
   "name": "@swup/cli",
-  "version": "5.0.0",
+  "version": "5.0.3",
   "description": "Swup CLI for plugin generation, site validation and local development",
   "type": "module",
   "author": {
@@ -22,7 +22,7 @@
     "/oclif.manifest.json"
   ],
   "dependencies": {
-    "@oclif/core": "^2.0.0",
+    "@oclif/core": "^3.0.0-beta.13",
     "@oclif/plugin-help": "^5.0.0",
     "chalk": "^5.3.0",
     "listr2": "^6.6.1",
