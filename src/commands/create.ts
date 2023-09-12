@@ -1,7 +1,7 @@
 import * as fs from 'fs/promises'
 import { join } from 'path'
 
-import { Command, Flags } from '@oclif/core'
+import { Args, Command, Flags } from '@oclif/core'
 import chalk from 'chalk'
 import { Listr } from 'listr2'
 import { rimraf } from 'rimraf'
@@ -33,24 +33,22 @@ export default class Create extends Command {
 	static summary = 'Create a swup plugin or theme'
 	static description = 'Generate a new swup plugin or theme from an official, best-practice template'
 	static examples = [
-		`<%= config.bin %> <%= command.id %> --name SwupExamplePlugin`,
-		`<%= config.bin %> <%= command.id %> --name SwupExampleTheme --type theme`,
+		`<%= config.bin %> <%= command.id %> SwupExamplePlugin`,
+		`<%= config.bin %> <%= command.id %> SwupExampleTheme --type theme`,
 	]
-	static flags = {
-		name: Flags.string({
+
+	static args = {
+		name: Args.string({
 			summary: 'Plugin name',
-			description: 'Name of the plugin as used in code and readme, e.g. Swup[YourName]Plugin',
-			required: true,
-			char: 'n',
-		}),
-		repo: Flags.string({
-			summary: 'Repository URL',
-			description: 'Link to a public Git repository of the new plugin',
-			char: 'r',
-		}),
+			description: 'Name of the plugin to create',
+			required: true
+		})
+	}
+
+	static flags = {
 		type: Flags.string({
-			summary: 'Type of plugin to create',
-			description: 'Choose between creating a plugin or a theme',
+			summary: 'Type',
+			description: 'Choose the type of project to create: plugin or theme. Not required if name ends with "Plugin" or "Theme".',
 			options: ['plugin', 'theme'],
 			default: 'plugin',
 			char: 't',
@@ -63,15 +61,21 @@ export default class Create extends Command {
 	}
 
 	async run(): Promise<void> {
-		const { flags: { repo, ...flags } } = await this.parse(Create)
+		const { args, flags: { repo, ...flags } } = await this.parse(Create)
 
-		const type = Type[flags.type as keyof typeof Type]
-		const names = this.generateNames(flags.name, type)
+		let type = Type[flags.type as keyof typeof Type]
+		if (type !== Type.theme && args.name.match(/theme$/i)) {
+			type = Type.theme
+			this.log(chalk`Provided name {magenta ${args.name}} ends with {magenta Theme}. Creating a theme instead.`)
+		}
+
+		const names = this.generateNames(args.name, type)
 		const dir = names.kebab
 		const path = join(process.cwd(), dir)
 
-		const ctx: Ctx = { type, names, dir, path, repo }
+		this.log(chalk`Creating new ${type} {magenta ${names.pascal}}...`)
 
+		const ctx: Ctx = { type, names, dir, path, repo }
 		const tasks = [
 			{ title: 'Creating directory', task: this.createDirectory.bind(this) },
 			{ title: 'Cloning repository', task: this.cloneRepository.bind(this) },
@@ -80,9 +84,8 @@ export default class Create extends Command {
 			{ title: 'Updating plugin file', task: this.updatePluginFile.bind(this) },
 			{ title: 'Updating readme', task: this.updateReadme.bind(this) },
 		]
-
-		this.log(chalk`Creating new ${type} {magenta ${names.pascal}}...`)
 		await new Listr<Ctx>(tasks, { ctx }).run()
+
 		this.log(chalk`Created ${type} {green ${names.pascal}}`)
 	}
 
@@ -170,11 +173,7 @@ export default class Create extends Command {
 		pckg.author.name = ''
 		pckg.author.email = ''
 		pckg.author.url = ''
-		if (ctx.repo) {
-			pckg.repository.url = ctx.repo
-		} else {
-			delete pckg.repository
-		}
+		pckg.repository.url = ctx.repo || ''
 
 		try {
 			await fs.writeFile(packagePath, JSON.stringify(pckg, null, 2))
