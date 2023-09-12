@@ -15,6 +15,25 @@ export async function fileExists(path: string): Promise<boolean> {
 	}
 }
 
+export async function isDirectory(path: string): Promise<boolean> {
+	try {
+		return (await fs.lstat(path)).isDirectory()
+	} catch (error) {
+		return false
+	}
+}
+
+export async function isEmptyDirectory(path: string): Promise<boolean> {
+	try {
+		const directory = await fs.opendir(path)
+		const entry = await directory.read()
+		await directory.close()
+		return entry === null
+	} catch (error) {
+		return false
+	}
+}
+
 export function cloneRepo(repoUrl: string, destination: string): Promise<void> {
 	return new Promise((resolve, reject) => {
 		exec(`git clone ${repoUrl} ${destination}`, (error, stdout, stderr) => {
