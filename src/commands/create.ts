@@ -1,12 +1,14 @@
 import * as fs from 'fs/promises'
 import { join } from 'path'
+
 import { Command, Flags } from '@oclif/core'
 import chalk from 'chalk'
 import { Listr } from 'listr2'
 import { rimraf } from 'rimraf'
 import { kebabCase, startCase, upperFirst } from 'lodash-es'
 
-import { cloneRepo, fileExists, isDirectory, isEmptyDirectory, pascalCase } from '../util.js'
+import { fileExists, isDirectory, isEmptyDirectory, pascalCase } from '../util.js'
+import { cloneRepo } from '../repo.js'
 
 enum Type {
 	plugin = 'plugin',
