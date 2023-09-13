@@ -54,14 +54,22 @@ async function getStyleProperties(page: Page, selector: string, properties: stri
 	return await Promise.all(properties.map(prop => getStyleProperty(page, selector, prop)))
 }
 
+async function addChangingClass(page: Page) {
+	await page.evaluate(() => document.documentElement.classList.add('is-changing'))
+}
+
+async function removeChangingClass(page: Page) {
+	await page.evaluate(() => document.documentElement.classList.remove('is-changing'))
+}
+
 async function addAnimatingClass(page: Page) {
-	await page.evaluate(() => {
-		document.documentElement.classList.add('is-animating')
-	})
+	await page.evaluate(() => document.documentElement.classList.add('is-animating'))
 }
 
 export async function validateTransitionDuration(page: Page, selector: string) {
+	await addChangingClass(page)
 	const transitionDurations = await getStyleProperty(page, selector, 'transition-duration')
+	await removeChangingClass(page)
 	const missingDurations = transitionDurations
 		.map(style => parseFloat(style['transition-duration']))
 		.filter(duration => !duration)

@@ -77,12 +77,12 @@ export default class Create extends Command {
 
 		const ctx: Ctx = { type, names, dir, path, repo }
 		const tasks = [
-			{ title: 'Creating directory', task: this.createDirectory.bind(this) },
-			{ title: 'Cloning repository', task: this.cloneRepository.bind(this) },
-			{ title: 'Cleaning git directory', task: this.clearGitDirectory.bind(this) },
-			{ title: 'Updating package.json', task: this.updatePackageJson.bind(this) },
-			{ title: 'Updating plugin file', task: this.updatePluginFile.bind(this) },
-			{ title: 'Updating readme', task: this.updateReadme.bind(this) },
+			{ title: 'Create directory', task: this.createDirectory.bind(this) },
+			{ title: 'Clone repository', task: this.cloneRepository.bind(this) },
+			{ title: 'Clean git directory', task: this.clearGitDirectory.bind(this) },
+			{ title: 'Update package.json', task: this.updatePackageJson.bind(this) },
+			{ title: 'Update plugin file', task: this.updatePluginFile.bind(this) },
+			{ title: 'Update readme', task: this.updateReadme.bind(this) },
 		]
 		await new Listr<Ctx>(tasks, { ctx }).run()
 

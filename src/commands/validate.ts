@@ -15,6 +15,7 @@ interface Ctx {
 	browser?: Browser
 	teardown?: () => Promise<void>
 	urls: string[]
+	errors: Error[]
 }
 
 export default class Validate extends Command {
@@ -85,16 +86,17 @@ export default class Validate extends Command {
 	async run(): Promise<void> {
 		const ctx: Ctx = {
 			config: await this.parseConfig(),
-			urls: []
+			urls: [],
+			errors: []
 		}
 
 		const tasks: ListrTask<Ctx>[] = [
 			{
-				title: 'Setting up',
+				title: 'Set up',
 				task: async (ctx, task) => {
 					return task.newListr(() => [
 						{
-							title: 'Launching browser',
+							title: 'Launch browser',
 							task: async (ctx) => {
 								const { browser, teardown } = await createBrowser()
 								ctx.browser = browser
@@ -105,7 +107,7 @@ export default class Validate extends Command {
 				}
 			},
 			{
-				title: 'Compiling pages',
+				title: 'Compile pages',
 				task: async (ctx, task) => {
 					const { source, urls } = await this.getPageUrls(ctx)
 					ctx.urls = urls
@@ -113,18 +115,35 @@ export default class Validate extends Command {
 				}
 			},
 			{
-				title: 'Validating pages',
+				title: 'Validate pages',
 				task: async (ctx, task) => {
-					const subtasks = ctx.urls.map((url, index) => ({
+					return task.newListr(ctx.urls.map((url, index) => ({
 						title: `Validating ${getLocalUrl(url)}`,
-						task: async () => await this.validatePage(ctx, url)
-					}))
-					return task.newListr(subtasks, { concurrent: ctx.config.validate.parallel })
-					// task.title = chalk`Validated {green ${urls.length} ${n(urls.length, 'page')}} in {magenta ${source}}`
+						task: async (_, subtask) => {
+							try {
+								await this.validatePage(ctx, url)
+							} catch (error) {
+								ctx.errors.push(error as Error)
+								subtask.title = chalk`{red ✗} ${getLocalUrl(url)}`
+							}
+						}
+					})), { exitOnError: false, concurrent: ctx.config.validate.parallel })
 				}
 			},
 			{
-				title: 'Shutting down',
+				title: 'Report results',
+				task: async (ctx, task) => {
+					const errors = ctx.errors.length
+					const total = ctx.urls.length
+					if (errors) {
+						throw new Error(chalk`{red Failed} validation for {red ${errors}/${total}} ${n(total, 'page')}`)
+					} else {
+						task.title = chalk`{green Passed} validation for {green ${total}/${total}} ${n(total, 'page')}`
+					}
+				}
+			},
+			{
+				title: 'Shut down',
 				task: async (ctx, task) => task.newListr(() => [
 					{
 						title: 'Closing browser',
