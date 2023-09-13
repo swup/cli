@@ -3,9 +3,8 @@ import { URL } from 'url'
 import { join } from 'path'
 
 import { Command, Flags } from '@oclif/core'
-// @ts-ignore
-import Crawler from 'crawler'
 import chalk from 'chalk'
+import Crawler from 'crawler'
 import { Listr, ListrTask } from 'listr2'
 import { Browser } from 'playwright'
 
@@ -188,48 +187,50 @@ export default class Validate extends Command {
 
 	getPageUrlsFromCrawler(ctx: Ctx): Promise<string[]> {
 		const urls: string[] = []
-		const { href, origin } = new URL(ctx.config.validate.url)
+		const base = new URL(ctx.config.validate.url)
 		return new Promise((resolve) => {
 			const crawler = new Crawler({
 				maxConnections: 10,
 				skipDuplicates: true,
-				// @ts-ignore
-				callback: function (error, res, done) {
+				callback: (error, res, done) => {
+					const $ = res.$
 					if (error) {
 						console.warn(error)
 					}
-					if (!res.$) {
+					if (!$) {
 						done()
 						return
 					}
-					urls.push(res.request.uri.href)
-					const $ = res.$
-					$('a[href]').each(function () {
-						// @ts-ignore
-						const href = $(this).attr('href')
-						if (!href) {
-							done()
-							return false
-						}
 
-						if (!new RegExp('.(gif|jpg|png|bmp|jpeg|pdf)$', 'i').test(href)) {
-							if (href.startsWith('http')) {
-								if (href.startsWith(origin)) {
-									crawler.queue(href)
-								}
-							} else if (href.startsWith('/')) {
-								crawler.queue(new URL(`${origin}${href}`).href)
+					urls.push(res.request.uri.href)
+
+					$('a[href]:not([download]):not([target="_blank"])').each((i, el) => {
+						const href = String($(el).attr('href')).trim()
+						if (href) {
+							const link = new URL(href, base)
+							if (isValidUrl(link) && this.isLocalUrl(link, base)) {
+								crawler.queue(link.href)
 							}
 						}
 					})
 
-					setTimeout(done) // I guess jQuery dom reading is slow?
+					setTimeout(done) // I guess Cheerio dom reading is slow?
 				},
 			})
 
 			crawler.on('drain', () => resolve(urls))
-			crawler.queue(href)
+			crawler.queue(base.href)
 		})
+	}
+
+	isLocalUrl(url: URL, base: URL): boolean {
+		if (url.origin !== base.origin) {
+			return false
+		}
+		if (url.pathname.match(/\.jpe?g|a?png|gif|pdf$/i)) {
+			return false
+		}
+		return true
 	}
 
 	async getPageUrlsFromSitemap(ctx: Ctx): Promise<string[]> {

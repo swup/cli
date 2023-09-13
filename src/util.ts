@@ -48,9 +48,12 @@ export function n(n: number, base: string): string {
 }
 
 
-export function isValidUrl(s: string, protocols: string[] = ['http', 'https']): boolean {
+export function isValidUrl(s: string | URL, protocols: string[] = ['http', 'https']): boolean {
+	if (!s) {
+		return false
+	}
 	try {
-		const { protocol } = new URL(s)
+		const { protocol } = new URL(String(s))
 		if (protocols?.length) {
 			return !!protocol && protocols.map(x => `${x.toLowerCase()}:`).includes(protocol)
 		} else {
