@@ -10,24 +10,10 @@ import { Browser } from 'playwright'
 
 import { createBrowser } from '../browser.js'
 import { isUrl } from '../util.js'
+import { defaults as defaultConfig, loadConfig, type Config } from '../config.js'
 
-interface ConfigFile {
-	swup?: object
-	validate?: object
-}
-
-interface Config {
-	animationSelector: string
-	containers: string[]
-	stylesExpectedToChange: string[]
-	sitemap: string
-	asynchronous: boolean
-	baseUrl?: string
-	runTests: string
-	testUrl?: string
-}
-
-interface Ctx extends Config {
+interface Ctx {
+	config: Config
 	browser?: Browser
 	teardown?: () => Promise<void>
 }
@@ -36,61 +22,76 @@ export default class Validate extends Command {
 	static summary = 'Validate a swup-powered site'
 	static description = 'Crawl your site and validate that all pages are accessible and render correctly'
 	static examples = [
-		`<%= config.bin %> <%= command.id %> --name SwupExamplePlugin`,
-		`<%= config.bin %> <%= command.id %> --name SwupExampleTheme --type theme`,
+		`<%= config.bin %> <%= command.id %>`,
+		`<%= config.bin %> <%= command.id %> --url https://mysite.com/about`,
+		`<%= config.bin %> <%= command.id %> --crawl --url https://mysite.com`,
+		`<%= config.bin %> <%= command.id %> --tests containers,transition-duration`,
+		`<%= config.bin %> <%= command.id %> --asynchronous`,
+		`<%= config.bin %> <%= command.id %> --crawl https://mysite.com`,
+		`<%= config.bin %> <%= command.id %> --asynchronous`,
 	]
 	static flags = {
-		config: Flags.string({
-			char: 'c',
-			description: 'Defines path of swup config file.',
-			required: false,
-			default: 'swup.config.js',
-		}),
-		testUrl: Flags.string({
+		url: Flags.string({
 			char: 'u',
-			description: 'Run tests for single URL.',
+			summary: 'URL',
+			description: 'Base URL to validate. Will validate this single URL only, unless --crawl is specified.',
 			required: false,
+			exclusive: ['sitemap'],
 		}),
-		runTests: Flags.string({
+		crawl: Flags.boolean({
+			char: 'c',
+			summary: 'Crawl site',
+			description: 'Crawl the site for all public URLs and validate all found pages. Requires the --url flag as a base URL.',
+			required: false,
+			default: false,
+			dependsOn: ['url']
+		}),
+		sitemap: Flags.string({
+			char: 's',
+			summary: 'Sitemap',
+			description: 'If no URL is passed, the local sitemap file will be scanned for public URLs. Accepts a local filepath or URL.',
+			required: false,
+			exclusive: ['url'],
+		}),
+		tests: Flags.string({
 			char: 't',
-			description: 'Run only specific test.',
+			summary: 'Tests',
+			description: 'Specify which tests to run when validating. Defaults to all.',
 			required: false,
-			default: 'all',
 			options: ['all', 'containers', 'transition-duration', 'transition-styles'],
+			default: 'all',
 		}),
-		baseUrl: Flags.string({
-			char: 'b',
-			description: 'Crawl site based on defined base URL and find URLs to check automatically (pages that are not linked from other pages, like 404, won\'t be checked)',
+		parallel: Flags.boolean({
+			char: 'p',
+			summary: 'Parallel',
+			description: 'Run all tests asynchronously. A lot faster, but might cause issues.',
 			required: false,
+			default: false,
 		}),
 		containers: Flags.string({
-			char: 'o',
-			description: 'Container selectors separated by a comma (,)',
+			summary: 'Containers',
+			description: 'Selectors of containers to validate, separated by comma.',
 			required: false,
 			default: '#swup',
 		}),
-		stylesExpectedToChange: Flags.string({
-			char: 's',
-			description: 'Styles expected to change separated by a comma (,)',
+		animation: Flags.string({
+			summary: 'Animation selector',
+			description: 'Selector of elements that should be animated.',
+			required: false,
+			default: '[class*="transition-"]',
+		}),
+		styles: Flags.string({
+			summary: 'Expected styles',
+			description: 'CSS properties expected to change during animations, separated by comma.',
 			required: false,
 			default: 'opacity,transform',
-		}),
-		sitemap: Flags.string({
-			char: 'm',
-			description: 'Sitemap file (accepts file path or URL)',
-			required: false,
-			default: 'public/sitemap.xml',
-		}),
-		asynchronous: Flags.boolean({
-			char: 'a',
-			description: 'Execute all tests asynchronously at once (around 5x faster, but might cause problems)',
-			required: false,
-			default: false,
 		}),
 	}
 
 	async run(): Promise<void> {
-		const ctx: Ctx = await this.parseConfig()
+		const ctx: Ctx = {
+			config: await this.parseConfig()
+		}
 
 		const tasks: ListrTask<Ctx>[] = [
 			{
@@ -134,58 +135,49 @@ export default class Validate extends Command {
 		throw error
 	}
 
-
-	async readSwupConfig(filename: string): Promise<ConfigFile> {
-		const path = join(process.cwd(), filename)
-		try {
-			const config = await import(path)
-			if (typeof config !== 'object') {
-				throw new Error('Not a valid object')
-			}
-			return config
-		} catch (error) {
-			throw new Error(`Error reading swup config file: ${error}`)
-		}
-	}
-
 	async parseConfig(): Promise<Config> {
 		const { flags } = await this.parse(Validate)
-		const userConfig = await this.readSwupConfig(flags.config)
-		return {
-			animationSelector: flags.animationSelector,
-			containers: flags.containers.split(','),
-			stylesExpectedToChange: flags.stylesExpectedToChange.split(','),
-			sitemap: flags.sitemap,
-			asynchronous: flags.asynchronous,
-			baseUrl: flags.baseUrl,
-			runTests: flags.runTests,
-			testUrl: flags.testUrl,
-			...userConfig.swup,
-			...userConfig.validate
+		const overrides = {
+			swup: {
+				animationSelector: flags.animationSelector,
+				containers: flags.containers.split(','),
+			},
+			validate: {
+				url: flags.url,
+				crawl: flags.crawl,
+				sitemap: flags.sitemap,
+				asynchronous: flags.asynchronous,
+				tests: flags.tests.split(','),
+				styles: flags.stylesExpectedToChange.split(','),
+			}
 		}
+		return await loadConfig(overrides)
 	}
 
 	async getPagesToTest(ctx: Ctx): Promise<{ urls: string[], source: string }> {
-		let source = ''
+		const { url, crawl, sitemap } = ctx.config.validate
 		let urls: string[] = []
-		if (ctx.testUrl) {
-			source = 'single url argument'
-			urls = [ctx.testUrl]
-		} else if (ctx.baseUrl) {
-			source = 'crawled site urls'
-			urls = await this.getPageUrlsFromCrawler(ctx)
-		} else if (ctx.sitemap) {
-			source = `parsed sitemap ${ctx.sitemap}`
+		let source = ''
+		if (url) {
+			if (crawl) {
+				source = 'crawled site urls'
+				urls = await this.getPageUrlsFromCrawler(ctx)
+			} else {
+				source = 'single url argument'
+				urls = [url]
+			}
+		} else if (sitemap) {
+			source = `parsed sitemap ${sitemap}`
 			urls = await this.getPageUrlsFromSitemap(ctx)
+		} else {
+			throw new Error('You must specify either a url or a sitemap to validate.')
 		}
 		return { urls, source }
 	}
 
 	getPageUrlsFromCrawler(ctx: Ctx): Promise<string[]> {
-		if (!ctx.baseUrl) return Promise.resolve([])
-
 		const urls: string[] = []
-		const { origin } = new URL(ctx.baseUrl)
+		const { href, origin } = new URL(ctx.config.validate.url)
 		return new Promise((resolve) => {
 			const crawler = new Crawler({
 				maxConnections: 10,
@@ -224,24 +216,23 @@ export default class Validate extends Command {
 				},
 			})
 
-			crawler.queue(ctx.baseUrl)
 			crawler.on('drain', () => resolve(urls))
+			crawler.queue(href)
 		})
 	}
 
 	async getPageUrlsFromSitemap(ctx: Ctx): Promise<string[]> {
-		if (!ctx.baseUrl) return Promise.resolve([])
-
-		let sitemap
-		if (isUrl(ctx.sitemap)) {
+		const { sitemap } = ctx.config.validate
+		let contents
+		if (isUrl(sitemap)) {
 			try {
-				sitemap = await (fetch(ctx.sitemap).then(res => res.text()))
+				contents = await (fetch(sitemap).then(res => res.text()))
 			} catch (error) {
 				throw new Error(`Error fetching sitemap: ${error}`)
 			}
 		} else {
 			try {
-				sitemap = await fs.readFile(join(process.cwd(), ctx.sitemap), 'utf8')
+				contents = await fs.readFile(join(process.cwd(), sitemap), 'utf8')
 			} catch (error) {
 				throw new Error(`Error reading sitemap: ${error}`)
 			}
