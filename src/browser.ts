@@ -6,7 +6,7 @@ import Crawler from 'crawler'
 
 import { isAssetUrl, isHtmlContentType, isLocalUrl, isValidUrl, removeHash, wait } from './util.js'
 
-type Styles = Record<string, string>[]
+type Styles = Record<string, string>
 
 export async function createBrowser(): Promise<{ browser: Browser, teardown: () => Promise<void> }> {
 	const browser = await chromium.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] })
@@ -40,18 +40,22 @@ export async function validateNumberOfContainers(page: Page, url: string, expect
 	}
 }
 
-export async function getStyleProperty(page: Page, selector: string, property: string): Promise<Styles> {
+export async function getStyleProperty(page: Page, selector: string, property: string): Promise<string> {
 	return await page.evaluate(({ selector, property }) => {
-		const elements = Array.from(document.querySelectorAll(selector))
-		return elements.map((el) => {
-			const style = window.getComputedStyle(el)
-			return { [property]: style.getPropertyValue(property) }
-		})
+		const element = document.querySelector(selector)
+		return element ? window.getComputedStyle(element).getPropertyValue(property) : ''
 	}, { selector, property })
 }
 
-async function getStyleProperties(page: Page, selector: string, properties: string[]): Promise<Styles[]> {
-	return await Promise.all(properties.map(prop => getStyleProperty(page, selector, prop)))
+async function getStyleProperties(page: Page, selector: string, properties: string[]): Promise<Styles> {
+	const styles: Styles = {}
+	for (const prop of properties) {
+		const style = await getStyleProperty(page, selector, prop)
+		if (style) {
+			styles[prop] = style
+		}
+	}
+	return styles
 }
 
 async function addChangingClass(page: Page) {
@@ -66,47 +70,40 @@ async function addAnimatingClass(page: Page) {
 	await page.evaluate(() => document.documentElement.classList.add('is-animating'))
 }
 
-export async function validateTransitionDuration(page: Page, selector: string) {
+export async function getAnimationDuration(page: Page, selector: string): Promise<number> {
+	const transition = parseFloat(await getStyleProperty(page, selector, 'transition-duration'))
+	const animation = parseFloat(await getStyleProperty(page, selector, 'animation-duration'))
+	const duration = Math.max(transition, animation)
+	return duration
+}
+
+export async function validateAnimationDuration(page: Page, selector: string) {
 	await addChangingClass(page)
-	const transitionDurations = await getStyleProperty(page, selector, 'transition-duration')
+	const duration = getAnimationDuration(page, selector)
 	await removeChangingClass(page)
-	const missingDurations = transitionDurations
-		.map(style => parseFloat(style['transition-duration']))
-		.filter(duration => !duration)
-	if (missingDurations.length) {
-		throw new Error(`Missing transition duration on element: ${selector}`)
+	if (!duration) {
+		throw new Error(`Missing animation duration on element: ${selector}`)
 	}
 }
 
-export async function validateTransitionStyles(page: Page, selector: string, changedStyles: string[]) {
-	const duration = await getStyleProperty(page, selector, 'transition-duration')
-	const stylesBefore = await getStyleProperties(page, selector, changedStyles)
+export async function validateAnimationStyles(page: Page, selector: string, styles: string[]) {
+	await addChangingClass(page)
+	const duration = await getAnimationDuration(page, selector)
+	const before = await getStyleProperties(page, selector, styles)
 	await addAnimatingClass(page)
-	await wait(1000)
-	const stylesAfter = await getStyleProperties(page, selector, changedStyles)
-	const styles = mergeStyles(duration, stylesBefore, stylesAfter)
+	await wait(duration + 100)
+	const after = await getStyleProperties(page, selector, styles)
+	await removeChangingClass(page)
 
-	for (const element of styles) {
-		const changed = Object.keys(element.before).map(key => element.before[key] !== element.after[key])
-		const atLeastOneChanged = changed.reduce((c, a) => a || c, false)
-		if (!atLeastOneChanged) {
-			throw new Error(`Missing expected style change on element: ${selector} (${changedStyles.join(', ')})`)
+	if (!Object.keys(before).length && !Object.keys(after).length) {
+		throw new Error(`Missing expected styles on element: ${selector} (${styles.join(', ')})`)
+	}
+
+	for (const prop of Object.keys(before)) {
+		if (before[prop] !== after[prop]) {
+			throw new Error(`Missing expected style change on element: ${selector} (${prop})`)
 		}
 	}
-}
-
-function mergeStyles(transitionDuration: Styles, before: Styles[], after: Styles[]) {
-	return transitionDuration.map((item, index) => {
-		return {
-			...item,
-			before: {
-				...before.map((item) => ({...item[index]})).reduce((c, a) => ({ ...a, ...c })),
-			},
-			after: {
-				...after.map((item) => ({...item[index]})).reduce((c, a) => ({ ...a, ...c })),
-			}
-		}
-	})
 }
 
 export function crawlSiteForUrls(url: string): Promise<string[]> {

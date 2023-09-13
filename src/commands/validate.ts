@@ -6,7 +6,7 @@ import chalk from 'chalk'
 import { Listr, ListrTask } from 'listr2'
 import { Browser } from 'playwright'
 
-import { crawlSiteForUrls, createBrowser, validateTransitionDuration, validateTransitionStyles, visitPage } from '../browser.js'
+import { crawlSiteForUrls, createBrowser, validateAnimationDuration, validateAnimationStyles, visitPage } from '../browser.js'
 import { getLocalUrl, isUrl, isValidUrl, n } from '../util.js'
 import { loadConfig, type Config } from '../config.js'
 
@@ -110,7 +110,7 @@ export default class Validate extends Command {
 				title: 'Compile pages',
 				task: async (ctx, task) => {
 					const { source, urls } = await this.getPageUrls(ctx)
-					ctx.urls = urls
+					ctx.urls = urls.slice(0, 10)
 					task.title = chalk`Found {green ${urls.length} ${n(urls.length, 'page')}} in {magenta ${source}}`
 				}
 			},
@@ -132,13 +132,12 @@ export default class Validate extends Command {
 			},
 			{
 				title: 'Report results',
-				task: async (ctx, task) => {
-					const errors = ctx.errors.length
-					const total = ctx.urls.length
-					if (errors) {
-						throw new Error(chalk`{red Failed} validation for {red ${errors}/${total}} ${n(total, 'page')}`)
+				task: async ({ errors, urls: { length: total } }, task) => {
+					if (errors.length) {
+						errors.forEach(error => this.error(error))
+						this.error(chalk`Validation {red failed} for {red ${errors.length}/${total}} ${n(total, 'page')}`)
 					} else {
-						task.title = chalk`{green Passed} validation for {green ${total}/${total}} ${n(total, 'page')}`
+						task.title = chalk`Validation {green passed} for {green ${total}/${total}} ${n(total, 'page')}`
 					}
 				}
 			},
@@ -176,15 +175,15 @@ export default class Validate extends Command {
 		const overrides = {
 			swup: {
 				animationSelector: flags.animationSelector,
-				containers: flags.containers.split(','),
+				containers: flags.containers.split(',').map(style => style.trim()),
 			},
 			validate: {
 				url: flags.url,
 				crawl: flags.crawl,
 				sitemap: flags.sitemap,
 				asynchronous: flags.asynchronous,
-				tests: flags.tests.split(','),
-				styles: flags.styles.split(','),
+				tests: flags.tests.split(',').map(style => style.trim()).filter(test => test && test !== 'all'),
+				styles: flags.styles.split(',').map(style => style.trim()),
 			}
 		}
 		return await loadConfig(overrides)
@@ -241,12 +240,15 @@ export default class Validate extends Command {
 		const { browser } = ctx
 		const page = await visitPage(browser!, url)
 		const checks = {
-			'transition-duration': () => validateTransitionDuration(page, animationSelector),
-			'transition-styles': () => validateTransitionStyles(page, animationSelector, styles)
+			'transition-duration': () => validateAnimationDuration(page, animationSelector),
+			'transition-styles': () => validateAnimationStyles(page, animationSelector, styles)
 		}
 		const actualChecks = Object.entries(checks).filter(
-			([test]) => !tests.length || tests.includes('all') || tests.includes(test)
+			([test]) => !tests.length || tests.includes(test)
 		)
+		if (!actualChecks.length) {
+			throw new Error(`No valid tests specified. Available tests: ${Object.keys(checks).join(', ')}`)
+		}
 		for (const [, test] of actualChecks) {
 			await test()
 		}
