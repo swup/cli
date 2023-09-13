@@ -110,7 +110,7 @@ export default class Validate extends Command {
 				title: 'Compile pages',
 				task: async (ctx, task) => {
 					const { source, urls } = await this.getPageUrls(ctx)
-					ctx.urls = urls.slice(0, 10)
+					ctx.urls = urls
 					task.title = chalk`Found {green ${urls.length} ${n(urls.length, 'page')}} in {magenta ${source}}`
 				}
 			},

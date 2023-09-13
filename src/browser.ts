@@ -16,7 +16,7 @@ export async function createBrowser(): Promise<{ browser: Browser, teardown: () 
 
 export async function visitPage(browser: Browser, url: string) {
 	const page = await browser.newPage()
-	await page.goto(url)
+	await page.goto(url, { waitUntil: 'domcontentloaded' })
 	return page
 }
 
@@ -96,12 +96,12 @@ export async function validateAnimationStyles(page: Page, selector: string, styl
 	await removeChangingClass(page)
 
 	if (!Object.keys(before).length && !Object.keys(after).length) {
-		throw new Error(`Missing expected styles on element: ${selector} (${styles.join(', ')})`)
+		throw new Error(`Styles not found on element: ${selector} (${styles.join(', ')})`)
 	}
 
 	for (const prop of Object.keys(before)) {
-		if (before[prop] !== after[prop]) {
-			throw new Error(`Missing expected style change on element: ${selector} (${prop})`)
+		if (before[prop] === after[prop]) {
+			throw new Error(`Styles not changed on element: ${selector} (${prop})`)
 		}
 	}
 }
