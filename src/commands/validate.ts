@@ -6,8 +6,8 @@ import chalk from 'chalk'
 import { Listr, ListrTask } from 'listr2'
 import { Browser } from 'playwright'
 
-import { crawlSiteForUrls, createBrowser, visitPage } from '../browser.js'
-import { isUrl, isValidUrl, n } from '../util.js'
+import { crawlSiteForUrls, createBrowser, validateTransitionDuration, validateTransitionStyles, visitPage } from '../browser.js'
+import { getLocalUrl, isUrl, isValidUrl, n } from '../util.js'
 import { loadConfig, type Config } from '../config.js'
 
 interface Ctx {
@@ -91,7 +91,8 @@ export default class Validate extends Command {
 		const tasks: ListrTask<Ctx>[] = [
 			{
 				title: 'Setting up',
-				task: async (ctx, task) => task.newListr(() => [
+				task: async (ctx, task) => {
+					return task.newListr(() => [
 						{
 							title: 'Launching browser',
 							task: async (ctx) => {
@@ -99,16 +100,27 @@ export default class Validate extends Command {
 								ctx.browser = browser
 								ctx.teardown = teardown
 							}
-						},
-					]
-				)
+						}
+					])
+				}
 			},
 			{
 				title: 'Compiling pages',
-				task: async (ctx, task): Promise<void> => {
+				task: async (ctx, task) => {
 					const { source, urls } = await this.getPageUrls(ctx)
 					ctx.urls = urls
 					task.title = chalk`Found {green ${urls.length} ${n(urls.length, 'page')}} in {magenta ${source}}`
+				}
+			},
+			{
+				title: 'Validating pages',
+				task: async (ctx, task) => {
+					const subtasks = ctx.urls.map((url, index) => ({
+						title: `Validating ${getLocalUrl(url)}`,
+						task: async () => await this.validatePage(ctx, url)
+					}))
+					return task.newListr(subtasks, { concurrent: ctx.config.validate.parallel })
+					// task.title = chalk`Validated {green ${urls.length} ${n(urls.length, 'page')}} in {magenta ${source}}`
 				}
 			},
 			{
@@ -202,5 +214,22 @@ export default class Validate extends Command {
 
 		// return (JSON.parse(parser.toJson(sitemap)).urlset.url.map(i => i.loc))
 		return []
+	}
+
+	async validatePage(ctx: Ctx, url: string): Promise<void> {
+		const { tests, styles } = ctx.config.validate
+		const { animationSelector } = ctx.config.swup
+		const { browser } = ctx
+		const page = await visitPage(browser!, url)
+		const checks = {
+			'transition-duration': () => validateTransitionDuration(page, animationSelector),
+			'transition-styles': () => validateTransitionStyles(page, animationSelector, styles)
+		}
+		const actualChecks = Object.entries(checks).filter(
+			([test]) => !tests.length || tests.includes('all') || tests.includes(test)
+		)
+		for (const [, test] of actualChecks) {
+			await test()
+		}
 	}
 }

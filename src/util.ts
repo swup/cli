@@ -76,3 +76,12 @@ export function isHtmlContentType(headers: Record<string, string>): boolean {
 	const contentType = headers['content-type'] || headers['Content-Type']
 	return Boolean(contentType && contentType.match(/\bx?html\b/i))
 }
+
+export function removeHash(url: URL | string): string {
+	return String(url).replace(/#.*$/, '')
+}
+
+export function getLocalUrl(url: URL | string): string {
+	const { pathname, search } = new URL(String(url))
+	return pathname + search
+}

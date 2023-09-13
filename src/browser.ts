@@ -4,7 +4,7 @@ import { chromium } from 'playwright'
 import type { Browser, Page } from 'playwright'
 import Crawler from 'crawler'
 
-import { isAssetUrl, isHtmlContentType, isLocalUrl, isValidUrl, wait } from './util.js'
+import { isAssetUrl, isHtmlContentType, isLocalUrl, isValidUrl, removeHash, wait } from './util.js'
 
 type Styles = Record<string, string>[]
 
@@ -60,22 +60,17 @@ async function addAnimatingClass(page: Page) {
 	})
 }
 
-async function validateTransitionDurationStyles(page: Page, url: string, selector: string) {
+export async function validateTransitionDuration(page: Page, selector: string) {
 	const transitionDurations = await getStyleProperty(page, selector, 'transition-duration')
 	const missingDurations = transitionDurations
 		.map(style => parseFloat(style['transition-duration']))
 		.filter(duration => !duration)
 	if (missingDurations.length) {
-		return {
-			text: 'Animated element has transition-duration set to 0s',
-			expected: '> 0s',
-			received: missingDurations[0],
-			page: url,
-		}
+		throw new Error(`Missing transition duration on element: ${selector}`)
 	}
 }
 
-async function validateTransitionStyles(page: Page, url: string, selector: string, changedStyles: string[]) {
+export async function validateTransitionStyles(page: Page, selector: string, changedStyles: string[]) {
 	const duration = await getStyleProperty(page, selector, 'transition-duration')
 	const stylesBefore = await getStyleProperties(page, selector, changedStyles)
 	await addAnimatingClass(page)
@@ -83,21 +78,13 @@ async function validateTransitionStyles(page: Page, url: string, selector: strin
 	const stylesAfter = await getStyleProperties(page, selector, changedStyles)
 	const styles = mergeStyles(duration, stylesBefore, stylesAfter)
 
-	return styles.map(element => {
+	for (const element of styles) {
 		const changed = Object.keys(element.before).map(key => element.before[key] !== element.after[key])
 		const atLeastOneChanged = changed.reduce((c, a) => a || c, false)
-
 		if (!atLeastOneChanged) {
-			return {
-				text: 'At least one animated style property must change with class "is-animating"',
-				expected: `Not ${JSON.stringify(element.before)}`,
-				received: JSON.stringify(element.after),
-				page: url,
-			}
+			throw new Error(`Missing expected style change on element: ${selector} (${changedStyles.join(', ')})`)
 		}
-
-		return false
-	}).filter(i => i)[0]
+	}
 }
 
 function mergeStyles(transitionDuration: Styles, before: Styles[], after: Styles[]) {
@@ -109,7 +96,7 @@ function mergeStyles(transitionDuration: Styles, before: Styles[], after: Styles
 			},
 			after: {
 				...after.map((item) => ({...item[index]})).reduce((c, a) => ({ ...a, ...c })),
-			},
+			}
 		}
 	})
 }
@@ -136,11 +123,11 @@ export function crawlSiteForUrls(url: string): Promise<string[]> {
 				}
 				urls.push(request.uri.href)
 				$('a[href]:not([download])').each((i, el) => {
-					const href = String($(el).attr('href')).trim()
-					if (href) {
-						const link = new URL(href, base)
-						if (isValidUrl(link) && isLocalUrl(link, base) && !isAssetUrl(link)) {
-							crawler.queue(link.href)
+					const href = removeHash(String($(el).attr('href')).trim())
+					const url = new URL(href, base)
+					if (isValidUrl(url)) {
+						if (!urls.includes(url.href) && isLocalUrl(url, base) && !isAssetUrl(url)) {
+							crawler.queue(url.href)
 						}
 					}
 				})
