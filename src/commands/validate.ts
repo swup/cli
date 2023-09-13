@@ -122,9 +122,10 @@ export default class Validate extends Command {
 						task: async (_, subtask) => {
 							try {
 								await this.validatePage(ctx, url)
+								subtask.title = chalk`{green Validated} ${getLocalUrl(url)}`
 							} catch (error) {
 								ctx.errors.push(error as Error)
-								subtask.title = chalk`{red ✗} ${getLocalUrl(url)}`
+								subtask.title = chalk`{red Failed} ${getLocalUrl(url)}`
 							}
 						}
 					})), { exitOnError: false, concurrent: ctx.config.validate.parallel })
@@ -134,7 +135,7 @@ export default class Validate extends Command {
 				title: 'Report results',
 				task: async ({ errors, urls: { length: total } }, task) => {
 					if (errors.length) {
-						errors.forEach(error => this.error(error))
+						errors.forEach(error => this.warn(error))
 						this.error(chalk`Validation {red failed} for {red ${errors.length}/${total}} ${n(total, 'page')}`)
 					} else {
 						task.title = chalk`Validation {green passed} for {green ${total}/${total}} ${n(total, 'page')}`
@@ -210,6 +211,7 @@ export default class Validate extends Command {
 		} else {
 			throw new Error('You must specify either a url or a sitemap to validate.')
 		}
+		urls = [...new Set(urls)]
 		return { urls, source }
 	}
 
@@ -239,18 +241,20 @@ export default class Validate extends Command {
 		const { animationSelector } = ctx.config.swup
 		const { browser } = ctx
 		const page = await visitPage(browser!, url)
-		const checks = {
+		const allChecks = {
 			'transition-duration': () => validateAnimationDuration(page, animationSelector),
 			'transition-styles': () => validateAnimationStyles(page, animationSelector, styles)
 		}
-		const actualChecks = Object.entries(checks).filter(
-			([test]) => !tests.length || tests.includes(test)
-		)
-		if (!actualChecks.length) {
-			throw new Error(`No valid tests specified. Available tests: ${Object.keys(checks).join(', ')}`)
+		const checks = Object.entries(allChecks).filter(([test]) => !tests.length || tests.includes(test))
+		if (!checks.length) {
+			throw new Error(`No valid tests specified. Available tests: ${Object.keys(allChecks).join(', ')}`)
 		}
-		for (const [, test] of actualChecks) {
-			await test()
+		for (const [, test] of checks) {
+			try {
+				await test()
+			} catch (error) {
+				throw new Error(chalk`Validation {red failed} for {magenta ${getLocalUrl(url)}}: ${error}`)
+			}
 		}
 	}
 }

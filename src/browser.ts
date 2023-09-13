@@ -4,7 +4,7 @@ import { chromium } from 'playwright'
 import type { Browser, Page } from 'playwright'
 import Crawler from 'crawler'
 
-import { isAssetUrl, isHtmlContentType, isLocalUrl, isValidUrl, removeHash, wait } from './util.js'
+import { getLocalUrl, isAssetUrl, isHtmlContentType, isLocalUrl, isValidUrl, removeHash, wait } from './util.js'
 
 type Styles = Record<string, string>
 
@@ -20,11 +20,15 @@ export async function visitPage(browser: Browser, url: string) {
 	return page
 }
 
-export async function countElementsOnPage(page: Page, selector: string) {
+export async function elementExists(page: Page, selector: string): Promise<boolean> {
+	return await page.evaluate((selector) => !!document.querySelector(selector), selector)
+}
+
+export async function countElementsOnPage(page: Page, selector: string): Promise<number> {
 	return await page.evaluate((selector) => document.querySelectorAll(selector).length, selector)
 }
 
-export async function getNumberOfContainers(page: Page, selectors: string[]) {
+export async function getNumberOfContainers(page: Page, selectors: string[]): Promise<number> {
 	return await countElementsOnPage(page, selectors.join(', '))
 }
 
@@ -87,6 +91,11 @@ export async function validateAnimationDuration(page: Page, selector: string) {
 }
 
 export async function validateAnimationStyles(page: Page, selector: string, styles: string[]) {
+	const exists = await elementExists(page, selector)
+	if (!exists) {
+		throw new Error(`Element not found: ${selector}`)
+	}
+
 	await addChangingClass(page)
 	const duration = await getAnimationDuration(page, selector)
 	const before = await getStyleProperties(page, selector, styles)
@@ -118,9 +127,13 @@ export function crawlSiteForUrls(url: string): Promise<string[]> {
 	return new Promise((resolve) => {
 		const crawler = new Crawler({
 			...options,
-			callback: (error, { request, headers, $ }, done) => {
+			callback: (error, { request, statusCode, headers, $ }, done) => {
 				if (error) {
 					console.error(error)
+					return done()
+				}
+				if (statusCode < 200 || statusCode >= 400) {
+					console.warn(`Received status ${statusCode} on ${getLocalUrl(request.uri.href)}`)
 					return done()
 				}
 				if (!isHtmlContentType(headers)) {
