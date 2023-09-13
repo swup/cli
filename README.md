@@ -1,14 +1,13 @@
 # Swup CLI
 
-[![oclif](https://img.shields.io/badge/cli-oclif-brightgreen.svg)](https://oclif.io)
 [![Version](https://img.shields.io/npm/v/@swup/cli.svg)](https://npmjs.org/package/@swup/cli)
-[![Downloads/week](https://img.shields.io/npm/dw/@swup/cli.svg)](https://npmjs.org/package/@swup/cli)
 [![License](https://img.shields.io/npm/l/@swup/cli.svg)](https://github.com/gmrchk/cli/blob/master/package.json)
+[![oclif](https://img.shields.io/badge/cli-oclif-brightgreen.svg)](https://oclif.io)
 
-A command-line interface (CLI) to aid in developing [swup](https://swup.js.org/) sites and plugins.
+A command-line interface (CLI) to help develop [swup](https://swup.js.org/) sites and plugins.
 
-- Validate your website for CI/CD
-- Create plugins and themes from a template
+- Validate your website in CI/CD
+- Create plugins and themes from a best-practice template
 - Bundle plugins and themes using microbundle
 
 ## Contents
@@ -27,16 +26,17 @@ npm install -g @swup/cli
 
 ## Usage
 
-The CLI installs a binary called `swup`. Run that, followed by any of the provided [commands](#commands).
+The CLI will install a binary called `swup` you can run, followed by any of the provided [commands](#commands).
 
 ```sh
 $ swup [command]
-running command...
-
-$ swup (--version)
-@swup/cli/5.0.0 darwin-arm64 node-v18.16.0
+> Running command...
 
 $ swup --help [command]
+> Show help for command [command]
+
+$ swup --version
+> @swup/cli/5.0.0 darwin-arm64 node-v18.16.0
 ```
 
 ## Commands
@@ -45,22 +45,22 @@ $ swup --help [command]
 
 Create a new plugin or theme by cloning from the plugin template repository.
 
-```
+```sh
 USAGE
-  $ swup hello PERSON -f <value>
+  $ swup create NAME -f <value>
 
 ARGUMENTS
-  PERSON  Person to say hello to
+  NAME  Name of the plugin to create
 
 FLAGS
-  -f, --from=<value>  (required) Who is saying hello
+  -t, --type=<value>  Type of project: plugin | theme
 
 DESCRIPTION
-  Say hello
+  Generate a new swup plugin or theme from an official, best-practice template
 
 EXAMPLES
-  $ oex hello friend --from oclif
-  hello friend from oclif! (./src/commands/hello/index.ts)
+  $ swup create SwupExamplePlugin
+  $ swup create SwupExampleTheme
 ```
 
 See code: [src/commands/create.ts](https://github.com/swup/cli/blob/master/src/commands/create.ts)
@@ -69,7 +69,7 @@ See code: [src/commands/create.ts](https://github.com/swup/cli/blob/master/src/c
 
 Display help for any command.
 
-```
+```sh
 USAGE
   $ swup help [COMMANDS] [-n]
 

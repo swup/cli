@@ -35,7 +35,7 @@ export default class Create extends Command {
 		'Generate a new swup plugin or theme from an official, best-practice template';
 	static examples = [
 		`<%= config.bin %> <%= command.id %> SwupExamplePlugin`,
-		`<%= config.bin %> <%= command.id %> SwupExampleTheme --type theme`
+		`<%= config.bin %> <%= command.id %> SwupExampleTheme`
 	];
 
 	static args = {
