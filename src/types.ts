@@ -1,5 +1,5 @@
-type JSONPrimitive = null | number | string | boolean
-type JSONObject = { [k: string]: JSONValue }
-type JSONArray = JSONValue[]
+type JSONPrimitive = null | number | string | boolean;
+type JSONObject = { [k: string]: JSONValue };
+type JSONArray = JSONValue[];
 
-export type JSONValue =  JSONObject | JSONArray | JSONPrimitive
+export type JSONValue = JSONObject | JSONArray | JSONPrimitive;

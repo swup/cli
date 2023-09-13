@@ -1,53 +1,63 @@
-import * as fs from 'fs/promises'
-import { join } from 'path'
+import * as fs from 'fs/promises';
+import { join } from 'path';
 
-import { Command, Flags } from '@oclif/core'
-import chalk from 'chalk'
-import { Listr, ListrTask } from 'listr2'
-import { Browser } from 'playwright'
+import { Command, Flags } from '@oclif/core';
+import chalk from 'chalk';
+import { Listr, ListrTask } from 'listr2';
+import { Browser } from 'playwright';
 
-import { crawlSiteForUrls, createBrowser, validateAnimationDuration, validateAnimationStyles, visitPage } from '../browser.js'
-import { getLocalUrl, isUrl, isValidUrl, n } from '../util.js'
-import { loadConfig, type Config } from '../config.js'
+import {
+	crawlSiteForUrls,
+	createBrowser,
+	validateAnimationDuration,
+	validateAnimationStyles,
+	visitPage
+} from '../browser.js';
+import { getLocalUrl, isUrl, isValidUrl, n } from '../util.js';
+import { loadConfig, type Config } from '../config.js';
 
 interface Ctx {
-	config: Config
-	browser?: Browser
-	teardown?: () => Promise<void>
-	urls: string[]
-	errors: Error[]
+	config: Config;
+	browser?: Browser;
+	teardown?: () => Promise<void>;
+	urls: string[];
+	errors: Error[];
 }
 
 export default class Validate extends Command {
-	static summary = 'Validate a swup-powered site'
-	static description = 'Crawl your site and validate that all pages are accessible and render correctly'
+	static summary = 'Validate a swup-powered site';
+	static description =
+		'Crawl your site and validate that all pages are accessible and render correctly';
 	static examples = [
 		`<%= config.bin %> <%= command.id %>`,
 		`<%= config.bin %> <%= command.id %> --url https://mysite.com/about`,
 		`<%= config.bin %> <%= command.id %> --crawl --url https://mysite.com`,
 		`<%= config.bin %> <%= command.id %> --tests containers,transition-duration`,
-		`<%= config.bin %> <%= command.id %> --asynchronous`,
-	]
+		`<%= config.bin %> <%= command.id %> --asynchronous`
+	];
 	static flags = {
 		url: Flags.string({
 			char: 'u',
 			summary: 'URL',
-			description: 'Base URL to validate. Will validate this single URL only, unless --crawl is specified.',
+			description:
+				'Base URL to validate. Will validate this single URL only, unless --crawl is specified.',
 			required: false,
-			exclusive: ['sitemap'],
+			exclusive: ['sitemap']
 		}),
 		crawl: Flags.boolean({
 			char: 'c',
 			summary: 'Crawl site',
-			description: 'Crawl the site for all public URLs and validate all found pages. Requires the --url flag as a base URL.',
-			required: false,
+			description:
+				'Crawl the site for all public URLs and validate all found pages. Requires the --url flag as a base URL.',
+			required: false
 		}),
 		sitemap: Flags.string({
 			char: 's',
 			summary: 'Sitemap',
-			description: 'If no URL is passed, the local sitemap file will be scanned for public URLs. Accepts a local filepath or URL.',
+			description:
+				'If no URL is passed, the local sitemap file will be scanned for public URLs. Accepts a local filepath or URL.',
 			required: false,
-			exclusive: ['url'],
+			exclusive: ['url']
 		}),
 		tests: Flags.string({
 			char: 't',
@@ -55,40 +65,40 @@ export default class Validate extends Command {
 			description: 'Specify which tests to run when validating. Defaults to all.',
 			required: false,
 			options: ['all', 'containers', 'transition-duration', 'transition-styles'],
-			default: 'all',
+			default: 'all'
 		}),
 		parallel: Flags.boolean({
 			char: 'p',
 			summary: 'Parallel',
 			description: 'Run all tests asynchronously. A lot faster, but might cause issues.',
-			required: false,
+			required: false
 		}),
 		containers: Flags.string({
 			summary: 'Containers',
 			description: 'Selectors of containers to validate, separated by comma.',
 			required: false,
-			default: '#swup',
+			default: '#swup'
 		}),
 		animation: Flags.string({
 			summary: 'Animation selector',
 			description: 'Selector of elements that should be animated.',
 			required: false,
-			default: '[class*="transition-"]',
+			default: '[class*="transition-"]'
 		}),
 		styles: Flags.string({
 			summary: 'Expected styles',
 			description: 'CSS properties expected to change during animations, separated by comma.',
 			required: false,
-			default: 'opacity,transform',
-		}),
-	}
+			default: 'opacity,transform'
+		})
+	};
 
 	async run(): Promise<void> {
 		const ctx: Ctx = {
 			config: await this.parseConfig(),
 			urls: [],
 			errors: []
-		}
+		};
 
 		const tasks: ListrTask<Ctx>[] = [
 			{
@@ -98,162 +108,188 @@ export default class Validate extends Command {
 						{
 							title: 'Launch browser',
 							task: async (ctx) => {
-								const { browser, teardown } = await createBrowser()
-								ctx.browser = browser
-								ctx.teardown = teardown
+								const { browser, teardown } = await createBrowser();
+								ctx.browser = browser;
+								ctx.teardown = teardown;
 							}
 						}
-					])
+					]);
 				}
 			},
 			{
 				title: 'Compile pages',
 				task: async (ctx, task) => {
-					const { source, urls } = await this.getPageUrls(ctx)
-					ctx.urls = urls
-					task.title = chalk`Found {green ${urls.length} ${n(urls.length, 'page')}} in {magenta ${source}}`
+					const { source, urls } = await this.getPageUrls(ctx);
+					ctx.urls = urls;
+					task.title = chalk`Found {green ${urls.length} ${n(
+						urls.length,
+						'page'
+					)}} in {magenta ${source}}`;
 				}
 			},
 			{
 				title: 'Validate pages',
 				task: async (ctx, task) => {
-					return task.newListr(ctx.urls.map((url, index) => ({
-						title: `Validating ${getLocalUrl(url)}`,
-						task: async (_, subtask) => {
-							try {
-								await this.validatePage(ctx, url)
-								subtask.title = chalk`{green Validated} ${getLocalUrl(url)}`
-							} catch (error) {
-								ctx.errors.push(error as Error)
-								subtask.title = chalk`{red Failed} ${getLocalUrl(url)}`
+					return task.newListr(
+						ctx.urls.map((url, index) => ({
+							title: `Validating ${getLocalUrl(url)}`,
+							task: async (_, subtask) => {
+								try {
+									await this.validatePage(ctx, url);
+									subtask.title = chalk`{green Validated} ${getLocalUrl(url)}`;
+								} catch (error) {
+									ctx.errors.push(error as Error);
+									subtask.title = chalk`{red Failed} ${getLocalUrl(url)}`;
+								}
 							}
-						}
-					})), { exitOnError: false, concurrent: ctx.config.validate.parallel })
+						})),
+						{ exitOnError: false, concurrent: ctx.config.validate.parallel }
+					);
 				}
 			},
 			{
 				title: 'Report results',
 				task: async ({ errors, urls: { length: total } }, task) => {
 					if (errors.length) {
-						errors.forEach(error => this.warn(error))
-						this.error(chalk`Validation {red failed} for {red ${errors.length}/${total}} ${n(total, 'page')}`)
+						errors.forEach((error) => this.warn(error));
+						this.error(
+							chalk`Validation {red failed} for {red ${errors.length}/${total}} ${n(
+								total,
+								'page'
+							)}`
+						);
 					} else {
-						task.title = chalk`Validation {green passed} for {green ${total}/${total}} ${n(total, 'page')}`
+						task.title = chalk`Validation {green passed} for {green ${total}/${total}} ${n(
+							total,
+							'page'
+						)}`;
 					}
 				}
 			},
 			{
 				title: 'Shut down',
-				task: async (ctx, task) => task.newListr(() => [
-					{
-						title: 'Closing browser',
-						task: async (ctx) => {
-							await ctx.teardown!()
-							ctx.teardown = undefined
+				task: async (ctx, task) =>
+					task.newListr(() => [
+						{
+							title: 'Closing browser',
+							task: async (ctx) => {
+								await ctx.teardown!();
+								ctx.teardown = undefined;
+							}
 						}
-					}
-				])
+					])
 			}
-		]
+		];
 
 		try {
-			await new Listr<Ctx>(tasks, { ctx }).run()
+			await new Listr<Ctx>(tasks, { ctx }).run();
 		} catch (error) {
 			if (ctx.teardown) {
-				await ctx.teardown()
+				await ctx.teardown();
 			}
-			throw error
+			throw error;
 		}
 	}
 
 	async catch(error: Error) {
 		// this.error(error as Error)
-		throw error
+		throw error;
 	}
 
 	async parseConfig(): Promise<Config> {
-		const { flags } = await this.parse(Validate)
+		const { flags } = await this.parse(Validate);
 		const overrides = {
 			swup: {
 				animationSelector: flags.animationSelector,
-				containers: flags.containers.split(',').map(style => style.trim()),
+				containers: flags.containers.split(',').map((style) => style.trim())
 			},
 			validate: {
 				url: flags.url,
 				crawl: flags.crawl,
 				sitemap: flags.sitemap,
 				asynchronous: flags.asynchronous,
-				tests: flags.tests.split(',').map(style => style.trim()).filter(test => test && test !== 'all'),
-				styles: flags.styles.split(',').map(style => style.trim()),
+				tests: flags.tests
+					.split(',')
+					.map((style) => style.trim())
+					.filter((test) => test && test !== 'all'),
+				styles: flags.styles.split(',').map((style) => style.trim())
 			}
-		}
-		return await loadConfig(overrides)
+		};
+		return await loadConfig(overrides);
 	}
 
-	async getPageUrls(ctx: Ctx): Promise<{ urls: string[], source: string }> {
-		const { url, crawl, sitemap } = ctx.config.validate
-		let urls: string[] = []
-		let source = ''
+	async getPageUrls(ctx: Ctx): Promise<{ urls: string[]; source: string }> {
+		const { url, crawl, sitemap } = ctx.config.validate;
+		let urls: string[] = [];
+		let source = '';
 		if (url) {
 			if (!isValidUrl(url)) {
-				throw new Error(`Invalid URL: ${url}. Make sure you include the protocol and hostname.`)
+				throw new Error(
+					`Invalid URL: ${url}. Make sure you include the protocol and hostname.`
+				);
 			}
 			if (crawl) {
-				source = 'crawled site'
-				urls = await crawlSiteForUrls(url)
+				source = 'crawled site';
+				urls = await crawlSiteForUrls(url);
 			} else {
-				source = 'url argument'
-				urls = [url]
+				source = 'url argument';
+				urls = [url];
 			}
 		} else if (sitemap) {
-			source = 'parsed sitemap'
-			urls = await this.getPageUrlsFromSitemap(ctx)
+			source = 'parsed sitemap';
+			urls = await this.getPageUrlsFromSitemap(ctx);
 		} else {
-			throw new Error('You must specify either a url or a sitemap to validate.')
+			throw new Error('You must specify either a url or a sitemap to validate.');
 		}
-		urls = [...new Set(urls)]
-		return { urls, source }
+		urls = [...new Set(urls)];
+		return { urls, source };
 	}
 
 	async getPageUrlsFromSitemap(ctx: Ctx): Promise<string[]> {
-		const { sitemap } = ctx.config.validate
-		let contents
+		const { sitemap } = ctx.config.validate;
+		let contents;
 		if (isUrl(sitemap)) {
 			try {
-				contents = await (fetch(sitemap).then(res => res.text()))
+				contents = await fetch(sitemap).then((res) => res.text());
 			} catch (error) {
-				throw new Error(`Error fetching sitemap: ${error}`)
+				throw new Error(`Error fetching sitemap: ${error}`);
 			}
 		} else {
 			try {
-				contents = await fs.readFile(join(process.cwd(), sitemap), 'utf8')
+				contents = await fs.readFile(join(process.cwd(), sitemap), 'utf8');
 			} catch (error) {
-				throw new Error(`Error reading sitemap: ${error}`)
+				throw new Error(`Error reading sitemap: ${error}`);
 			}
 		}
 
 		// return (JSON.parse(parser.toJson(sitemap)).urlset.url.map(i => i.loc))
-		return []
+		return [];
 	}
 
 	async validatePage(ctx: Ctx, url: string): Promise<void> {
-		const { tests, styles } = ctx.config.validate
-		const { animationSelector } = ctx.config.swup
-		const { browser } = ctx
-		const page = await visitPage(browser!, url)
+		const { tests, styles } = ctx.config.validate;
+		const { animationSelector } = ctx.config.swup;
+		const { browser } = ctx;
+		const page = await visitPage(browser!, url);
 		const allChecks = {
 			'transition-duration': () => validateAnimationDuration(page, animationSelector),
 			'transition-styles': () => validateAnimationStyles(page, animationSelector, styles)
-		}
-		const checks = Object.entries(allChecks).filter(([test]) => !tests.length || tests.includes(test))
+		};
+		const checks = Object.entries(allChecks).filter(
+			([test]) => !tests.length || tests.includes(test)
+		);
 		if (!checks.length) {
-			throw new Error(`No valid tests specified. Available tests: ${Object.keys(allChecks).join(', ')}`)
+			throw new Error(
+				`No valid tests specified. Available tests: ${Object.keys(allChecks).join(', ')}`
+			);
 		}
 		for (const [, test] of checks) {
 			try {
-				await test()
+				await test();
 			} catch (error) {
-				throw new Error(chalk`Validation {red failed} for {magenta ${getLocalUrl(url)}}: ${error}`)
+				throw new Error(
+					chalk`Validation {red failed} for {magenta ${getLocalUrl(url)}}: ${error}`
+				);
 			}
 		}
 	}
