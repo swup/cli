@@ -1,9 +1,8 @@
 import { readFile } from 'node:fs/promises';
 
 import { resolve } from './resolve.js';
-import { JSONValue } from './types.js';
 
-export function checkPluginPackageInfo(data?: JSONValue): { errors: string[] } {
+export function checkPluginPackageInfo(data?: unknown): { errors: string[] } {
 	const errors = [];
 	const pckg = data as any;
 
@@ -39,7 +38,7 @@ export function checkPluginPackageInfo(data?: JSONValue): { errors: string[] } {
 	return { errors };
 }
 
-export async function loadPackageInfo(): Promise<JSONValue> {
+export async function loadPackageInfo(): Promise<unknown> {
 	try {
 		const importPath = new URL(resolve('package.json'), import.meta.url);
 		return JSON.parse(await readFile(importPath, { encoding: 'utf8' }));

@@ -1,11 +1,10 @@
 import { Command } from '@oclif/core';
 import { Listr } from 'listr2';
 
-import { JSONValue } from '../../types.js';
 import { checkPluginPackageInfo, loadPackageInfo } from '../../package.js';
 
 interface Ctx {
-	pckg?: JSONValue;
+	pckg?: unknown;
 }
 
 export default class Check extends Command {
