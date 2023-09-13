@@ -1,6 +1,7 @@
 import * as fs from 'fs/promises'
-
+import { URL } from 'url'
 import { join } from 'path'
+
 import { Command, Flags } from '@oclif/core'
 // @ts-ignore
 import Crawler from 'crawler'
@@ -8,14 +9,15 @@ import chalk from 'chalk'
 import { Listr, ListrTask } from 'listr2'
 import { Browser } from 'playwright'
 
-import { createBrowser } from '../browser.js'
-import { isUrl } from '../util.js'
-import { defaults as defaultConfig, loadConfig, type Config } from '../config.js'
+import { createBrowser, visitPage } from '../browser.js'
+import { isUrl, isValidUrl, n } from '../util.js'
+import { loadConfig, type Config } from '../config.js'
 
 interface Ctx {
 	config: Config
 	browser?: Browser
 	teardown?: () => Promise<void>
+	urls: string[]
 }
 
 export default class Validate extends Command {
@@ -26,8 +28,6 @@ export default class Validate extends Command {
 		`<%= config.bin %> <%= command.id %> --url https://mysite.com/about`,
 		`<%= config.bin %> <%= command.id %> --crawl --url https://mysite.com`,
 		`<%= config.bin %> <%= command.id %> --tests containers,transition-duration`,
-		`<%= config.bin %> <%= command.id %> --asynchronous`,
-		`<%= config.bin %> <%= command.id %> --crawl https://mysite.com`,
 		`<%= config.bin %> <%= command.id %> --asynchronous`,
 	]
 	static flags = {
@@ -43,8 +43,6 @@ export default class Validate extends Command {
 			summary: 'Crawl site',
 			description: 'Crawl the site for all public URLs and validate all found pages. Requires the --url flag as a base URL.',
 			required: false,
-			default: false,
-			dependsOn: ['url']
 		}),
 		sitemap: Flags.string({
 			char: 's',
@@ -66,7 +64,6 @@ export default class Validate extends Command {
 			summary: 'Parallel',
 			description: 'Run all tests asynchronously. A lot faster, but might cause issues.',
 			required: false,
-			default: false,
 		}),
 		containers: Flags.string({
 			summary: 'Containers',
@@ -90,7 +87,8 @@ export default class Validate extends Command {
 
 	async run(): Promise<void> {
 		const ctx: Ctx = {
-			config: await this.parseConfig()
+			config: await this.parseConfig(),
+			urls: []
 		}
 
 		const tasks: ListrTask<Ctx>[] = [
@@ -105,14 +103,16 @@ export default class Validate extends Command {
 								ctx.teardown = teardown
 							}
 						},
-						// {
-						// 	title: 'Compile list of pages',
-						// 	task: async (): Promise<void> => {
-						// 		const pages = this.getListOfPages(ctx)
-						// 	}
-						// },
 					]
 				)
+			},
+			{
+				title: 'Compiling pages',
+				task: async (ctx, task): Promise<void> => {
+					const { source, urls } = await this.getPageUrls(ctx)
+					ctx.urls = urls
+					task.title = chalk`Found {green ${urls.length} ${n(urls.length, 'page')}} in {magenta ${source}}`
+				}
 			},
 			{
 				title: 'Shutting down',
@@ -121,13 +121,21 @@ export default class Validate extends Command {
 						title: 'Closing browser',
 						task: async (ctx) => {
 							await ctx.teardown!()
+							ctx.teardown = undefined
 						}
 					}
 				])
 			}
 		]
 
-		await new Listr<Ctx>(tasks, { ctx }).run()
+		try {
+			await new Listr<Ctx>(tasks, { ctx }).run()
+		} catch (error) {
+			if (ctx.teardown) {
+				await ctx.teardown()
+			}
+			throw error
+		}
 	}
 
 	async catch(error: Error) {
@@ -148,26 +156,29 @@ export default class Validate extends Command {
 				sitemap: flags.sitemap,
 				asynchronous: flags.asynchronous,
 				tests: flags.tests.split(','),
-				styles: flags.stylesExpectedToChange.split(','),
+				styles: flags.styles.split(','),
 			}
 		}
 		return await loadConfig(overrides)
 	}
 
-	async getPagesToTest(ctx: Ctx): Promise<{ urls: string[], source: string }> {
+	async getPageUrls(ctx: Ctx): Promise<{ urls: string[], source: string }> {
 		const { url, crawl, sitemap } = ctx.config.validate
 		let urls: string[] = []
 		let source = ''
 		if (url) {
+			if (!isValidUrl(url)) {
+				throw new Error(`Invalid URL: ${url}. Make sure you include the protocol and hostname.`)
+			}
 			if (crawl) {
-				source = 'crawled site urls'
+				source = 'crawled site'
 				urls = await this.getPageUrlsFromCrawler(ctx)
 			} else {
-				source = 'single url argument'
+				source = 'url argument'
 				urls = [url]
 			}
 		} else if (sitemap) {
-			source = `parsed sitemap ${sitemap}`
+			source = 'parsed sitemap'
 			urls = await this.getPageUrlsFromSitemap(ctx)
 		} else {
 			throw new Error('You must specify either a url or a sitemap to validate.')

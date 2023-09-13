@@ -1,4 +1,6 @@
 import * as fs from 'fs/promises'
+import { URL } from 'url'
+
 import { camelCase, upperFirst } from 'lodash-es'
 
 export function wait(ms: number): Promise<void> {
@@ -37,6 +39,24 @@ export async function isEmptyDirectory(path: string): Promise<boolean> {
 		await directory.close()
 		return entry === null
 	} catch (error) {
+		return false
+	}
+}
+
+export function n(n: number, base: string): string {
+	return n === 1 ? base : `${base}s`
+}
+
+
+export function isValidUrl(s: string, protocols: string[] = ['http', 'https']): boolean {
+	try {
+		const { protocol } = new URL(s)
+		if (protocols?.length) {
+			return !!protocol && protocols.map(x => `${x.toLowerCase()}:`).includes(protocol)
+		} else {
+			return true
+		}
+	} catch (err) {
 		return false
 	}
 }
