@@ -1,6 +1,10 @@
+import { URL } from 'url'
+
 import { chromium } from 'playwright'
 import type { Browser, Page } from 'playwright'
-import { wait } from './util.js'
+import Crawler from 'crawler'
+
+import { isAssetUrl, isHtmlContentType, isLocalUrl, isValidUrl, wait } from './util.js'
 
 type Styles = Record<string, string>[]
 
@@ -107,5 +111,43 @@ function mergeStyles(transitionDuration: Styles, before: Styles[], after: Styles
 				...after.map((item) => ({...item[index]})).reduce((c, a) => ({ ...a, ...c })),
 			},
 		}
+	})
+}
+
+export function crawlSiteForUrls(url: string): Promise<string[]> {
+	const base = new URL(url)
+	const urls: string[] = []
+
+	const options: Crawler.CreateCrawlerOptions = {
+		maxConnections: 10,
+		skipDuplicates: true
+	}
+
+	return new Promise((resolve) => {
+		const crawler = new Crawler({
+			...options,
+			callback: (error, { request, headers, $ }, done) => {
+				if (error) {
+					console.error(error)
+					return done()
+				}
+				if (!isHtmlContentType(headers)) {
+					return done()
+				}
+				urls.push(request.uri.href)
+				$('a[href]:not([download])').each((i, el) => {
+					const href = String($(el).attr('href')).trim()
+					if (href) {
+						const link = new URL(href, base)
+						if (isValidUrl(link) && isLocalUrl(link, base) && !isAssetUrl(link)) {
+							crawler.queue(link.href)
+						}
+					}
+				})
+				setTimeout(done, 5)
+			},
+		})
+		crawler.on('drain', () => resolve(urls))
+		crawler.queue(base.href)
 	})
 }

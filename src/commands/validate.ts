@@ -1,14 +1,12 @@
 import * as fs from 'fs/promises'
-import { URL } from 'url'
 import { join } from 'path'
 
 import { Command, Flags } from '@oclif/core'
 import chalk from 'chalk'
-import Crawler from 'crawler'
 import { Listr, ListrTask } from 'listr2'
 import { Browser } from 'playwright'
 
-import { createBrowser, visitPage } from '../browser.js'
+import { crawlSiteForUrls, createBrowser, visitPage } from '../browser.js'
 import { isUrl, isValidUrl, n } from '../util.js'
 import { loadConfig, type Config } from '../config.js'
 
@@ -171,7 +169,7 @@ export default class Validate extends Command {
 			}
 			if (crawl) {
 				source = 'crawled site'
-				urls = await this.getPageUrlsFromCrawler(ctx)
+				urls = await crawlSiteForUrls(url)
 			} else {
 				source = 'url argument'
 				urls = [url]
@@ -183,54 +181,6 @@ export default class Validate extends Command {
 			throw new Error('You must specify either a url or a sitemap to validate.')
 		}
 		return { urls, source }
-	}
-
-	getPageUrlsFromCrawler(ctx: Ctx): Promise<string[]> {
-		const urls: string[] = []
-		const base = new URL(ctx.config.validate.url)
-		return new Promise((resolve) => {
-			const crawler = new Crawler({
-				maxConnections: 10,
-				skipDuplicates: true,
-				callback: (error, res, done) => {
-					const $ = res.$
-					if (error) {
-						console.warn(error)
-					}
-					if (!$) {
-						done()
-						return
-					}
-
-					urls.push(res.request.uri.href)
-
-					$('a[href]:not([download]):not([target="_blank"])').each((i, el) => {
-						const href = String($(el).attr('href')).trim()
-						if (href) {
-							const link = new URL(href, base)
-							if (isValidUrl(link) && this.isLocalUrl(link, base)) {
-								crawler.queue(link.href)
-							}
-						}
-					})
-
-					setTimeout(done) // I guess Cheerio dom reading is slow?
-				},
-			})
-
-			crawler.on('drain', () => resolve(urls))
-			crawler.queue(base.href)
-		})
-	}
-
-	isLocalUrl(url: URL, base: URL): boolean {
-		if (url.origin !== base.origin) {
-			return false
-		}
-		if (url.pathname.match(/\.jpe?g|a?png|gif|pdf$/i)) {
-			return false
-		}
-		return true
 	}
 
 	async getPageUrlsFromSitemap(ctx: Ctx): Promise<string[]> {

@@ -63,3 +63,16 @@ export function isValidUrl(s: string | URL, protocols: string[] = ['http', 'http
 		return false
 	}
 }
+
+export function isLocalUrl(url: URL, base: URL): boolean {
+	return url.origin === base.origin
+}
+
+export function isAssetUrl(url: URL): boolean {
+	return !!url.pathname.match(/\.(jpe?g|a?png|gif|webp|mp4|webm|mov|pdf|docx?|zip|gz)$/i)
+}
+
+export function isHtmlContentType(headers: Record<string, string>): boolean {
+	const contentType = headers['content-type'] || headers['Content-Type']
+	return Boolean(contentType && contentType.match(/\bx?html\b/i))
+}
