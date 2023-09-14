@@ -55,7 +55,7 @@ export default class Dev extends Command {
 							{
 								title: 'Start watch mode',
 								task: async () => {
-									exec('BROWSERSLIST_ENV=development microbundle -f modern --css inline -w');
+									exec('BROWSERSLIST_ENV=development npx microbundle -f modern --css inline -w');
 								}
 							}
 						]);
