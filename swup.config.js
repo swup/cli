@@ -3,6 +3,7 @@ export default {
     animationSelector: '[class*="swup-transition-"]'
   },
   validate: {
-    url: 'https://swup.js.org'
+    url: 'https://swup.js.org',
+    limit: 10
   }
 }

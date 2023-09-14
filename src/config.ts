@@ -12,6 +12,7 @@ export interface Config {
 		url: string;
 		crawl: boolean;
 		sitemap: string;
+		limit: number;
 		tests: string[];
 		parallel: boolean;
 		styles: string[];
@@ -29,6 +30,7 @@ export const defaults: Config = {
 		url: '',
 		crawl: false,
 		sitemap: '',
+		limit: 0,
 		tests: ['all'],
 		parallel: false,
 		styles: ['opacity', 'transform']

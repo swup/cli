@@ -51,6 +51,13 @@ export default class Validate extends Command {
 				'Crawl the site for all public URLs and validate all found pages. Requires the --url flag as a base URL.',
 			required: false
 		}),
+		limit: Flags.string({
+			char: 'l',
+			summary: 'Limit',
+			description:
+				'Limit the number of pages to validate when crawling or reading from a sitemap.',
+			required: false
+		}),
 		sitemap: Flags.string({
 			char: 's',
 			summary: 'Sitemap',
@@ -207,6 +214,7 @@ export default class Validate extends Command {
 				url: flags.url,
 				crawl: flags.crawl,
 				sitemap: flags.sitemap,
+				limit: Number(flags.limit),
 				asynchronous: flags.asynchronous,
 				tests: flags.tests
 					.split(',')
@@ -241,7 +249,10 @@ export default class Validate extends Command {
 		} else {
 			throw new Error('You must specify either a url or a sitemap to validate.');
 		}
-		urls = [...new Set(urls)];
+		urls = [...new Set(urls)]
+		if (ctx.config.validate.limit > 0) {
+			urls = urls.slice(0, ctx.config.validate.limit)
+		}
 		return { urls, source };
 	}
 
