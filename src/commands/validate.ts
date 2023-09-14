@@ -139,7 +139,7 @@ export default class Validate extends Command {
 				enabled: (ctx) => ctx.config.validate.limit > 0 && ctx.urls.length > ctx.config.validate.limit,
 				task: async (ctx, task) => {
 					ctx.urls = ctx.urls.slice(0, ctx.config.validate.limit);
-					task.title = chalk`Limiting to {blue ${ctx.urls.length} ${n(ctx.urls.length, 'page')}}`;
+					task.title = chalk`Limit to {blue ${ctx.urls.length} ${n(ctx.urls.length, 'page')}}`;
 				}
 			},
 			{

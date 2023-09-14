@@ -162,7 +162,7 @@ export function crawlSiteForUrls(url: string): Promise<string[]> {
 				}
 				if (statusCode < 200 || statusCode >= 400) {
 					console.warn(
-						chalk`{yellow ⚠} Received status {yellow ${statusCode}} {dim on} ${getLocalUrl(request.uri.href)}`
+						chalk`{yellow !} Received status {yellow ${statusCode}} {dim on} ${getLocalUrl(request.uri.href)}`
 					);
 					return done();
 				}
