@@ -221,11 +221,13 @@ Validate a swup-powered site
 
 ```
 USAGE
-  $ swup validate [-u <value> | -s <value>] [-c] [-t all|containers|transition-duration|transition-styles]
-    [-p] [--containers <value>] [--animation <value>] [--styles <value>]
+  $ swup validate [-u <value> | -s <value>] [-c] [-l <value>] [-t
+    all|containers|transition-duration|transition-styles] [-p] [--containers <value>] [--animation <value>] [--styles
+    <value>]
 
 FLAGS
   -c, --crawl            Crawl site
+  -l, --limit=<value>    Limit
   -p, --parallel         Parallel
   -s, --sitemap=<value>  Sitemap
   -t, --tests=<option>   [default: all] Tests
@@ -255,6 +257,10 @@ FLAG DESCRIPTIONS
   -c, --crawl  Crawl site
 
     Crawl the site for all public URLs and validate all found pages. Requires the --url flag as a base URL.
+
+  -l, --limit=<value>  Limit
+
+    Limit the number of pages to validate when crawling or reading from a sitemap.
 
   -p, --parallel  Parallel
 
