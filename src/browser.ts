@@ -3,6 +3,7 @@ import { URL } from 'url';
 import { chromium } from 'playwright';
 import type { Browser, Page } from 'playwright';
 import Crawler from 'crawler';
+import chalk from 'chalk';
 
 import {
 	getLocalUrl,
@@ -161,7 +162,7 @@ export function crawlSiteForUrls(url: string): Promise<string[]> {
 				}
 				if (statusCode < 200 || statusCode >= 400) {
 					console.warn(
-						`Received status ${statusCode} on ${getLocalUrl(request.uri.href)}`
+						chalk`{yellow ⚠} Received status {yellow ${statusCode}} {dim on} ${getLocalUrl(request.uri.href)}`
 					);
 					return done();
 				}
