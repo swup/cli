@@ -128,10 +128,18 @@ export default class Validate extends Command {
 				task: async (ctx, task) => {
 					const { source, urls } = await this.getPageUrls(ctx);
 					ctx.urls = urls;
-					task.title = chalk`Found {green ${urls.length} ${n(
+					task.title = chalk`Found {blue ${urls.length} ${n(
 						urls.length,
 						'page'
 					)}} in {magenta ${source}}`;
+				}
+			},
+			{
+				title: 'Limit pages',
+				enabled: (ctx) => ctx.config.validate.limit > 0 && ctx.urls.length > ctx.config.validate.limit,
+				task: async (ctx, task) => {
+					ctx.urls = ctx.urls.slice(0, ctx.config.validate.limit);
+					task.title = chalk`Limiting to {blue ${ctx.urls.length} ${n(ctx.urls.length, 'page')}}`;
 				}
 			},
 			{
@@ -160,13 +168,13 @@ export default class Validate extends Command {
 					if (errors.length) {
 						errors.forEach((error) => this.warn(error));
 						this.error(
-							chalk`Validation {red failed} for {red ${errors.length}/${total}} ${n(
+							chalk`{red.bold Validation failed} for {red ${errors.length}/${total}} ${n(
 								total,
 								'page'
 							)}`
 						);
 					} else {
-						task.title = chalk`Validation {green passed} for {green ${total}/${total}} ${n(
+						task.title = chalk`{green.bold Validation passed} for {green ${total}/${total}} ${n(
 							total,
 							'page'
 						)}`;
@@ -249,10 +257,7 @@ export default class Validate extends Command {
 		} else {
 			throw new Error('You must specify either a url or a sitemap to validate.');
 		}
-		urls = [...new Set(urls)]
-		if (ctx.config.validate.limit > 0) {
-			urls = urls.slice(0, ctx.config.validate.limit)
-		}
+		urls = [...new Set(urls)];
 		return { urls, source };
 	}
 
