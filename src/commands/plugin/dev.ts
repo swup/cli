@@ -50,7 +50,7 @@ export default class Dev extends Command {
 					title: 'Develop plugin',
 					task: async (ctx, task) => {
 						// @ts-ignore
-						task.title = chalk`Develop plugin {magenta ${ctx.pckg?.name}}`;
+						task.title = chalk`Bundle plugin {magenta ${ctx.pckg?.name}} and watch for changes`;
 						return task.newListr(() => [
 							{
 								title: 'Start watch mode',
