@@ -82,7 +82,7 @@ FLAG DESCRIPTIONS
     Choose the type of project to create: plugin or theme. Not required if name ends with "Plugin" or "Theme".
 ```
 
-_See code: [dist/commands/create.ts](https://github.com/swup/cli/blob/v5.0.3/dist/commands/create.ts)_
+_See code: [dist/commands/create.ts](https://github.com/swup/cli/blob/v5.0.0-rc.1/dist/commands/create.ts)_
 
 ## `swup help [COMMANDS]`
 
@@ -129,7 +129,7 @@ FLAG DESCRIPTIONS
     Check for required package.json fields before bundling. Disable using --no-check.
 ```
 
-_See code: [dist/commands/plugin/build.ts](https://github.com/swup/cli/blob/v5.0.3/dist/commands/plugin/build.ts)_
+_See code: [dist/commands/plugin/build.ts](https://github.com/swup/cli/blob/v5.0.0-rc.1/dist/commands/plugin/build.ts)_
 
 ## `swup plugin:check`
 
@@ -148,7 +148,7 @@ EXAMPLES
   $ swup plugin:check
 ```
 
-_See code: [dist/commands/plugin/check.ts](https://github.com/swup/cli/blob/v5.0.3/dist/commands/plugin/check.ts)_
+_See code: [dist/commands/plugin/check.ts](https://github.com/swup/cli/blob/v5.0.0-rc.1/dist/commands/plugin/check.ts)_
 
 ## `swup plugin:dev`
 
@@ -175,7 +175,7 @@ FLAG DESCRIPTIONS
     Check for required package.json fields before bundling. Disable using --no-check.
 ```
 
-_See code: [dist/commands/plugin/dev.ts](https://github.com/swup/cli/blob/v5.0.3/dist/commands/plugin/dev.ts)_
+_See code: [dist/commands/plugin/dev.ts](https://github.com/swup/cli/blob/v5.0.0-rc.1/dist/commands/plugin/dev.ts)_
 
 ## `swup plugin:format`
 
@@ -194,7 +194,7 @@ EXAMPLES
   $ swup plugin:format
 ```
 
-_See code: [dist/commands/plugin/format.ts](https://github.com/swup/cli/blob/v5.0.3/dist/commands/plugin/format.ts)_
+_See code: [dist/commands/plugin/format.ts](https://github.com/swup/cli/blob/v5.0.0-rc.1/dist/commands/plugin/format.ts)_
 
 ## `swup plugin:lint`
 
@@ -213,7 +213,7 @@ EXAMPLES
   $ swup plugin:lint
 ```
 
-_See code: [dist/commands/plugin/lint.ts](https://github.com/swup/cli/blob/v5.0.3/dist/commands/plugin/lint.ts)_
+_See code: [dist/commands/plugin/lint.ts](https://github.com/swup/cli/blob/v5.0.0-rc.1/dist/commands/plugin/lint.ts)_
 
 ## `swup validate`
 
@@ -291,5 +291,5 @@ FLAG DESCRIPTIONS
     CSS properties expected to change during animations, separated by comma.
 ```
 
-_See code: [dist/commands/validate.ts](https://github.com/swup/cli/blob/v5.0.3/dist/commands/validate.ts)_
+_See code: [dist/commands/validate.ts](https://github.com/swup/cli/blob/v5.0.0-rc.1/dist/commands/validate.ts)_
 <!-- commandsstop -->
