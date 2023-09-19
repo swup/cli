@@ -8,8 +8,8 @@ interface Ctx {
 }
 
 export default class Check extends Command {
-	static summary = 'Check plugin package info';
-	static description = 'Ensure a plugin package.json is valid';
+	static summary = 'Check package info';
+	static description = 'Ensure a bundle package.json is valid';
 	static examples = ['<%= config.bin %> <%= command.id %>'];
 
 	async run(): Promise<void> {

@@ -44,11 +44,11 @@ $ swup --version
 <!-- commands -->
 * [`swup create NAME`](#swup-create-name)
 * [`swup help [COMMANDS]`](#swup-help-commands)
-* [`swup plugin:build`](#swup-pluginbuild)
-* [`swup plugin:check`](#swup-plugincheck)
-* [`swup plugin:dev`](#swup-plugindev)
-* [`swup plugin:format`](#swup-pluginformat)
-* [`swup plugin:lint`](#swup-pluginlint)
+* [`swup package:build`](#swup-packagebuild)
+* [`swup package:check`](#swup-packagecheck)
+* [`swup package:dev`](#swup-packagedev)
+* [`swup package:format`](#swup-packageformat)
+* [`swup package:lint`](#swup-packagelint)
 * [`swup validate`](#swup-validate)
 
 ## `swup create NAME`
@@ -104,24 +104,24 @@ DESCRIPTION
 
 _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v5.2.19/src/commands/help.ts)_
 
-## `swup plugin:build`
+## `swup package:build`
 
-Build plugin
+Build package
 
 ```
 USAGE
-  $ swup plugin:build [--check]
+  $ swup package:build [--check]
 
 FLAGS
   --[no-]check  Check package info
 
 DESCRIPTION
-  Build plugin
+  Build package
 
-  Bundle plugin code for distribution using microbundle
+  Build package code for distribution using microbundle
 
 EXAMPLES
-  $ swup plugin:build
+  $ swup package:build
 
 FLAG DESCRIPTIONS
   --[no-]check  Check package info
@@ -129,45 +129,45 @@ FLAG DESCRIPTIONS
     Check for required package.json fields before bundling. Disable using --no-check.
 ```
 
-_See code: [dist/commands/plugin/build.ts](https://github.com/swup/cli/blob/v5.0.0-rc.1/dist/commands/plugin/build.ts)_
+_See code: [dist/commands/package/build.ts](https://github.com/swup/cli/blob/v5.0.0-rc.1/dist/commands/package/build.ts)_
 
-## `swup plugin:check`
+## `swup package:check`
 
-Check plugin package info
+Check package info
 
 ```
 USAGE
-  $ swup plugin:check
+  $ swup package:check
 
 DESCRIPTION
-  Check plugin package info
+  Check package info
 
-  Ensure a plugin package.json is valid
+  Ensure a bundle package.json is valid
 
 EXAMPLES
-  $ swup plugin:check
+  $ swup package:check
 ```
 
-_See code: [dist/commands/plugin/check.ts](https://github.com/swup/cli/blob/v5.0.0-rc.1/dist/commands/plugin/check.ts)_
+_See code: [dist/commands/package/check.ts](https://github.com/swup/cli/blob/v5.0.0-rc.1/dist/commands/package/check.ts)_
 
-## `swup plugin:dev`
+## `swup package:dev`
 
-Develop plugin
+Develop package
 
 ```
 USAGE
-  $ swup plugin:dev [--check]
+  $ swup package:dev [--check]
 
 FLAGS
   --[no-]check  Check package info
 
 DESCRIPTION
-  Develop plugin
+  Develop package
 
-  Bundle plugin code for development and watch for changes
+  Build package code for development using microbundle and watch for changes
 
 EXAMPLES
-  $ swup plugin:dev
+  $ swup package:dev
 
 FLAG DESCRIPTIONS
   --[no-]check  Check package info
@@ -175,45 +175,45 @@ FLAG DESCRIPTIONS
     Check for required package.json fields before bundling. Disable using --no-check.
 ```
 
-_See code: [dist/commands/plugin/dev.ts](https://github.com/swup/cli/blob/v5.0.0-rc.1/dist/commands/plugin/dev.ts)_
+_See code: [dist/commands/package/dev.ts](https://github.com/swup/cli/blob/v5.0.0-rc.1/dist/commands/package/dev.ts)_
 
-## `swup plugin:format`
+## `swup package:format`
 
-Format a plugin
-
-```
-USAGE
-  $ swup plugin:format
-
-DESCRIPTION
-  Format a plugin
-
-  Fix plugin code formatting issues
-
-EXAMPLES
-  $ swup plugin:format
-```
-
-_See code: [dist/commands/plugin/format.ts](https://github.com/swup/cli/blob/v5.0.0-rc.1/dist/commands/plugin/format.ts)_
-
-## `swup plugin:lint`
-
-Lint a plugin
+Format package
 
 ```
 USAGE
-  $ swup plugin:lint
+  $ swup package:format
 
 DESCRIPTION
-  Lint a plugin
+  Format package
 
-  Check plugin code for formatting issues
+  Fix code formatting issues using prettier
 
 EXAMPLES
-  $ swup plugin:lint
+  $ swup package:format
 ```
 
-_See code: [dist/commands/plugin/lint.ts](https://github.com/swup/cli/blob/v5.0.0-rc.1/dist/commands/plugin/lint.ts)_
+_See code: [dist/commands/package/format.ts](https://github.com/swup/cli/blob/v5.0.0-rc.1/dist/commands/package/format.ts)_
+
+## `swup package:lint`
+
+Lint package
+
+```
+USAGE
+  $ swup package:lint
+
+DESCRIPTION
+  Lint package
+
+  Check code for formatting issues using prettier
+
+EXAMPLES
+  $ swup package:lint
+```
+
+_See code: [dist/commands/package/lint.ts](https://github.com/swup/cli/blob/v5.0.0-rc.1/dist/commands/package/lint.ts)_
 
 ## `swup validate`
 

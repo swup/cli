@@ -10,8 +10,8 @@ interface Ctx {
 }
 
 export default class Build extends Command {
-	static summary = 'Build plugin';
-	static description = 'Bundle plugin code for distribution using microbundle';
+	static summary = 'Build package';
+	static description = 'Build package code for distribution using microbundle';
 	static examples = ['<%= config.bin %> <%= command.id %>'];
 
 	static flags = {
@@ -47,10 +47,10 @@ export default class Build extends Command {
 					}
 				},
 				{
-					title: 'Bundle plugin',
+					title: 'Bundle package',
 					task: async (ctx, task) => {
 						// @ts-ignore
-						task.title = chalk`Bundle plugin {magenta ${ctx.pckg?.name}}`;
+						task.title = chalk`Bundle package {magenta ${ctx.pckg?.name}}`;
 						return task.newListr(() => [
 							{
 								title: 'Create module bundle',

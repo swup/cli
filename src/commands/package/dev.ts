@@ -10,8 +10,8 @@ interface Ctx {
 }
 
 export default class Dev extends Command {
-	static summary = 'Develop plugin';
-	static description = 'Bundle plugin code for development and watch for changes';
+	static summary = 'Develop package';
+	static description = 'Build package code for development using microbundle and watch for changes';
 	static examples = ['<%= config.bin %> <%= command.id %>'];
 
 	static flags = {
@@ -47,10 +47,10 @@ export default class Dev extends Command {
 					}
 				},
 				{
-					title: 'Develop plugin',
+					title: 'Bundle package',
 					task: async (ctx, task) => {
 						// @ts-ignore
-						task.title = chalk`Bundle plugin {magenta ${ctx.pckg?.name}} and watch for changes`;
+						task.title = chalk`Bundle package {magenta ${ctx.pckg?.name}} and watch for changes`;
 						return task.newListr(() => [
 							{
 								title: 'Start watch mode',

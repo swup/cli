@@ -66,8 +66,8 @@
     ],
     "topicSeparator": ":",
     "topics": {
-      "plugin": {
-        "description": "Bundle, lint, and develop plugins"
+      "package": {
+        "description": "Bundle, lint, and develop packages"
       }
     }
   },
