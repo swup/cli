@@ -44,7 +44,7 @@
     "@types/crawler": "^1.2.3",
     "@types/lodash-es": "^4.17.9",
     "@types/mocha": "^9.0.0",
-    "@types/node": "^16.18.50",
+    "@types/node": "^16.18.52",
     "@types/shelljs": "^0.8.12",
     "chai": "^4.0.0",
     "eslint": "^7.32.0",
