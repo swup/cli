@@ -1,13 +1,6 @@
 {
-  "extends": "oclif",
-  "rules": {
-    "no-console": "off",
-    "no-return-await": "off",
-    "indent": ["error", 4],
-    "no-await-in-loop": "off",
-    "no-process-exit": "off",
-    "node/no-unsupported-features/es-syntax": "off",
-    "no-global-assign": "off",
-    "node/no-extraneous-require": "off"
-  }
+  "extends": [
+    "oclif",
+    "oclif-typescript"
+  ]
 }
