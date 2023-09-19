@@ -2,7 +2,7 @@
   "compilerOptions": {
     "declaration": true,
     "importHelpers": true,
-    "module": "ES2020",
+    "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "outDir": "dist",
     "rootDir": "src",
