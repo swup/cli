@@ -10,6 +10,8 @@ A command-line interface (CLI) to help develop [swup](https://swup.js.org/) site
 - Create plugins and themes from a best-practice template
 - Bundle plugins and themes using microbundle
 
+![terminal screenshot](src/assets/cli-screenshot-validate.png)
+
 ## Contents
 
 - [Installation](#installation)
