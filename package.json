@@ -1,7 +1,7 @@
 {
   "name": "@swup/cli",
-  "version": "5.0.0-rc.1",
   "description": "Swup CLI for plugin generation, site validation and local development",
+  "version": "5.0.0",
   "type": "module",
   "author": {
     "name": "Georgy Marchuk",
