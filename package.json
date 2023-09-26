@@ -1,6 +1,6 @@
 {
   "name": "@swup/cli",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "description": "Swup CLI for plugin development and site validation",
   "type": "module",
   "author": {
