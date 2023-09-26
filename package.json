@@ -54,7 +54,7 @@
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.0",
     "mocha": "^10.2.0",
-    "oclif": "^3.16.0",
+    "oclif": "^3.17.1",
     "shx": "^0.3.4",
     "ts-node": "^10.9.1",
     "tslib": "^2.6.2"
