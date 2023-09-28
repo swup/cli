@@ -1,8 +1,12 @@
 # Swup CLI
 
+<p class="shields">
+
 [![Version](https://img.shields.io/npm/v/@swup/cli.svg)](https://npmjs.org/package/@swup/cli)
 [![License](https://img.shields.io/npm/l/@swup/cli.svg)](https://github.com/gmrchk/cli/blob/master/package.json)
 [![oclif](https://img.shields.io/badge/cli-oclif-brightgreen.svg)](https://oclif.io)
+
+</p>
 
 A command-line interface (CLI) to help develop [swup](https://swup.js.org/) sites and plugins.
 
@@ -10,7 +14,8 @@ A command-line interface (CLI) to help develop [swup](https://swup.js.org/) site
 - Create plugins and themes from a best-practice template
 - Bundle plugins and themes using microbundle
 
-![terminal screenshot](src/assets/cli-screenshot-validate.png)
+![terminal screenshot](https://github.com/swup/cli/assets/869813/0d59b849-0801-4043-a325-801ed2d2982d)
+
 
 ## Contents
 
