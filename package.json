@@ -30,6 +30,7 @@
     "chalk": "^4.0.0",
     "cosmiconfig": "^8.3.6",
     "crawler": "^1.4.0",
+    "enquirer": "^2.4.1",
     "listr2": "^6.6.1",
     "lodash-es": "^4.17.21",
     "microbundle": "^0.15.1",
@@ -71,7 +72,8 @@
       "package": {
         "description": "Bundle, lint, and develop packages"
       }
-    }
+    },
+    "repositoryPrefix": "<%- repo %>/blob/<%- version %>/<%- commandPath %>"
   },
   "scripts": {
     "build": "shx rm -rf dist && tsc -b",
@@ -80,7 +82,7 @@
     "posttest": "npm run lint",
     "prepack": "npm run build && oclif manifest && oclif readme",
     "test": "mocha --forbid-only \"test/**/*.test.ts\"",
-    "version": "oclif readme && git add README.md"
+    "version": "npm run build && oclif readme && git add README.md"
   },
   "engines": {
     "node": ">=12.0.0"
