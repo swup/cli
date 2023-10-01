@@ -72,7 +72,8 @@
       "package": {
         "description": "Bundle, lint, and develop packages"
       }
-    }
+    },
+    "repositoryPrefix": "<%- repo %>/blob/<%- version %>/<%- commandPath %>"
   },
   "scripts": {
     "build": "shx rm -rf dist && tsc -b",
