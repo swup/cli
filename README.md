@@ -1,12 +1,12 @@
 # Swup CLI
 
-<p class="shields">
+<div class="shields">
 
 [![Version](https://img.shields.io/npm/v/@swup/cli.svg)](https://npmjs.org/package/@swup/cli)
 [![License](https://img.shields.io/npm/l/@swup/cli.svg)](https://github.com/gmrchk/cli/blob/master/package.json)
 [![oclif](https://img.shields.io/badge/cli-oclif-brightgreen.svg)](https://oclif.io)
 
-</p>
+</div>
 
 A command-line interface (CLI) to help develop [swup](https://swup.js.org/) sites and plugins.
 
