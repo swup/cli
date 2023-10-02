@@ -1,6 +1,6 @@
 # Swup CLI
 
-<div class="shields" align="center">
+<div class="shields">
 
 [![Version](https://img.shields.io/npm/v/@swup/cli.svg)](https://npmjs.org/package/@swup/cli)
 [![License](https://img.shields.io/npm/l/@swup/cli.svg)](https://github.com/gmrchk/cli/blob/master/package.json)
