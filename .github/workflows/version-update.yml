@@ -19,11 +19,12 @@ jobs:
     name: Update package version
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
         with:
           node-version: 16
       - run: echo "Updating ${{ inputs.segment }} version"
+      - run: npm ci
       - name: Update version
         run: npm --no-git-tag-version version ${{ inputs.segment }}
       - uses: peter-evans/create-pull-request@v4
