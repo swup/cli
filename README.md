@@ -1,12 +1,12 @@
 # Swup CLI
 
-<p class="shields">
+<div class="shields">
 
 [![Version](https://img.shields.io/npm/v/@swup/cli.svg)](https://npmjs.org/package/@swup/cli)
 [![License](https://img.shields.io/npm/l/@swup/cli.svg)](https://github.com/gmrchk/cli/blob/master/package.json)
 [![oclif](https://img.shields.io/badge/cli-oclif-brightgreen.svg)](https://oclif.io)
 
-</p>
+</div>
 
 A command-line interface (CLI) to help develop [swup](https://swup.js.org/) sites and plugins.
 
@@ -89,7 +89,7 @@ FLAG DESCRIPTIONS
     Choose the type of project to create: plugin or theme. Not required if name ends with "Plugin" or "Theme".
 ```
 
-_See code: [dist/commands/create.ts](https://github.com/swup/cli/blob/v5.0.0/dist/commands/create.ts)_
+_See code: [src/commands/create.ts](https://github.com/swup/cli/blob/5.0.2/src/commands/create.ts)_
 
 ## `swup help [COMMANDS]`
 
@@ -109,7 +109,7 @@ DESCRIPTION
   Display help for swup.
 ```
 
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v5.2.19/src/commands/help.ts)_
+_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v5.2.20/src/commands/help.ts)_
 
 ## `swup package:build`
 
@@ -136,7 +136,7 @@ FLAG DESCRIPTIONS
     Check for required package.json fields before bundling. Disable using --no-check.
 ```
 
-_See code: [dist/commands/package/build.ts](https://github.com/swup/cli/blob/v5.0.0/dist/commands/package/build.ts)_
+_See code: [src/commands/package/build.ts](https://github.com/swup/cli/blob/5.0.2/src/commands/package/build.ts)_
 
 ## `swup package:check`
 
@@ -155,7 +155,7 @@ EXAMPLES
   $ swup package:check
 ```
 
-_See code: [dist/commands/package/check.ts](https://github.com/swup/cli/blob/v5.0.0/dist/commands/package/check.ts)_
+_See code: [src/commands/package/check.ts](https://github.com/swup/cli/blob/5.0.2/src/commands/package/check.ts)_
 
 ## `swup package:dev`
 
@@ -182,7 +182,7 @@ FLAG DESCRIPTIONS
     Check for required package.json fields before bundling. Disable using --no-check.
 ```
 
-_See code: [dist/commands/package/dev.ts](https://github.com/swup/cli/blob/v5.0.0/dist/commands/package/dev.ts)_
+_See code: [src/commands/package/dev.ts](https://github.com/swup/cli/blob/5.0.2/src/commands/package/dev.ts)_
 
 ## `swup package:format`
 
@@ -201,7 +201,7 @@ EXAMPLES
   $ swup package:format
 ```
 
-_See code: [dist/commands/package/format.ts](https://github.com/swup/cli/blob/v5.0.0/dist/commands/package/format.ts)_
+_See code: [src/commands/package/format.ts](https://github.com/swup/cli/blob/5.0.2/src/commands/package/format.ts)_
 
 ## `swup package:lint`
 
@@ -220,7 +220,7 @@ EXAMPLES
   $ swup package:lint
 ```
 
-_See code: [dist/commands/package/lint.ts](https://github.com/swup/cli/blob/v5.0.0/dist/commands/package/lint.ts)_
+_See code: [src/commands/package/lint.ts](https://github.com/swup/cli/blob/5.0.2/src/commands/package/lint.ts)_
 
 ## `swup validate`
 
@@ -298,5 +298,5 @@ FLAG DESCRIPTIONS
     CSS properties expected to change during animations, separated by comma.
 ```
 
-_See code: [dist/commands/validate.ts](https://github.com/swup/cli/blob/v5.0.0/dist/commands/validate.ts)_
+_See code: [src/commands/validate.ts](https://github.com/swup/cli/blob/5.0.2/src/commands/validate.ts)_
 <!-- commandsstop -->
