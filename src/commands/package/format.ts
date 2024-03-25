@@ -9,13 +9,15 @@ export default class Lint extends Command {
 	static examples = ['<%= config.bin %> <%= command.id %>'];
 
 	async run(): Promise<void> {
-		await new Listr([{
-			title: 'Format package',
-			task: () => {
-				if (exec(`npx prettier 'src/**/*.{js,ts,mjs}' --write`)) {
-					throw new Error('Error formatting code');
+		await new Listr([
+			{
+				title: 'Format package',
+				task() {
+					if (exec(`npx prettier '**/*.{js,ts,mjs,cjs,css,md}' --write`)) {
+						throw new Error('Error formatting code');
+					}
 				}
 			}
-		}]).run();
+		]).run();
 	}
 }
