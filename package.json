@@ -29,7 +29,7 @@
     "@swup/prettier-config": "^1.0.0",
     "chalk": "^4.0.0",
     "cosmiconfig": "^8.3.6",
-    "crawler": "^1.4.0",
+    "crawler": "^2.0.1",
     "enquirer": "^2.4.1",
     "listr2": "^6.6.1",
     "lodash-es": "^4.17.21",
