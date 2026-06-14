@@ -12,7 +12,7 @@ A command-line interface (CLI) to help develop [swup](https://swup.js.org/) site
 
 - Validate your website in CI/CD
 - Create plugins and themes from a best-practice template
-- Bundle plugins and themes using microbundle
+- Bundle plugins and themes using tsdown
 
 ![terminal screenshot](https://github.com/swup/cli/assets/869813/0d59b849-0801-4043-a325-801ed2d2982d)
 
@@ -125,7 +125,7 @@ FLAGS
 DESCRIPTION
   Build package
 
-  Build package code for distribution using microbundle
+  Build package code for distribution using tsdown
 
 EXAMPLES
   $ swup package:build
@@ -171,7 +171,7 @@ FLAGS
 DESCRIPTION
   Develop package
 
-  Build package code for development using microbundle and watch for changes
+  Build package code for development using tsdown and watch for changes
 
 EXAMPLES
   $ swup package:dev
