@@ -11,3 +11,5 @@
 node_modules
 oclif.manifest.json
 *.tgz
+tsconfig.tsbuildinfo
+/test/fixtures/**/dist

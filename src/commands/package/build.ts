@@ -1,8 +1,8 @@
 import { Command, Flags } from '@oclif/core';
-import chalk from 'chalk';
+import template from 'chalk-template';
 import { Listr } from 'listr2';
 
-import { exec } from '../../shell.js';
+import { bundlePackage } from '../../bundle.js';
 import { checkPluginPackageInfo, loadPackageInfo } from '../../package.js';
 
 interface Ctx {
@@ -11,13 +11,14 @@ interface Ctx {
 
 export default class Build extends Command {
 	static summary = 'Build package';
-	static description = 'Build package code for distribution using microbundle';
+	static description = 'Build package code for distribution using tsdown';
 	static examples = ['<%= config.bin %> <%= command.id %>'];
 
 	static flags = {
 		check: Flags.boolean({
 			summary: 'Check package info',
-			description: 'Check for required package.json fields before bundling. Disable using --no-check.',
+			description:
+				'Check for required package.json fields before bundling. Disable using --no-check.',
 			required: false,
 			default: true,
 			allowNo: true
@@ -49,22 +50,9 @@ export default class Build extends Command {
 				{
 					title: 'Bundle package',
 					task: async (ctx, task) => {
-						// @ts-ignore
-						task.title = chalk`Bundle package {magenta ${ctx.pckg?.name}}`;
-						return task.newListr(() => [
-							{
-								title: 'Create module bundle',
-								task: async () => {
-									exec('BROWSERSLIST_ENV=modern npx microbundle -f modern,esm,cjs --css inline');
-								}
-							},
-							{
-								title: 'Create standalone bundle',
-								task: async () => {
-									exec('BROWSERSLIST_ENV=production npx microbundle -f umd --css inline --external none --define process.env.NODE_ENV=production');
-								}
-							}
-						]);
+						// @ts-ignore: ctx.pckg is typed as unknown
+						task.title = template`Bundle package {magenta ${ctx.pckg?.name}}`;
+						await bundlePackage(ctx.pckg);
 					}
 				}
 			],

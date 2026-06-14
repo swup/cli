@@ -1,0 +1,8 @@
+html {
+	--swup-test-plugin-duration: 0.4s;
+}
+
+html.is-changing .swup-transition-main {
+	opacity: 1;
+	transition: opacity var(--swup-test-plugin-duration);
+}

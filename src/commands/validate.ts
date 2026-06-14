@@ -2,7 +2,7 @@ import * as fs from 'fs/promises';
 import { join } from 'path';
 
 import { Command, Flags } from '@oclif/core';
-import chalk from 'chalk';
+import template from 'chalk-template';
 import { Listr, ListrTask } from 'listr2';
 import { Browser } from 'playwright';
 
@@ -128,7 +128,7 @@ export default class Validate extends Command {
 				task: async (ctx, task) => {
 					const { source, urls } = await this.getPageUrls(ctx);
 					ctx.urls = urls;
-					task.title = chalk`Found {blue ${urls.length} ${n(
+					task.title = template`Found {blue ${urls.length} ${n(
 						urls.length,
 						'page'
 					)}} in {magenta ${source}}`;
@@ -136,10 +136,11 @@ export default class Validate extends Command {
 			},
 			{
 				title: 'Limit pages',
-				enabled: (ctx) => ctx.config.validate.limit > 0 && ctx.urls.length > ctx.config.validate.limit,
+				enabled: (ctx) =>
+					ctx.config.validate.limit > 0 && ctx.urls.length > ctx.config.validate.limit,
 				task: async (ctx, task) => {
 					ctx.urls = ctx.urls.slice(0, ctx.config.validate.limit);
-					task.title = chalk`Limit to {blue ${ctx.urls.length} ${n(ctx.urls.length, 'page')}}`;
+					task.title = template`Limit to {blue ${ctx.urls.length} ${n(ctx.urls.length, 'page')}}`;
 				}
 			},
 			{
@@ -151,10 +152,10 @@ export default class Validate extends Command {
 							task: async (_, subtask) => {
 								try {
 									await this.validatePage(ctx, url);
-									subtask.title = chalk`{green Validated} ${getLocalUrl(url)}`;
+									subtask.title = template`{green Validated} ${getLocalUrl(url)}`;
 								} catch (error) {
 									ctx.errors.push(error as Error);
-									subtask.title = chalk`{red Failed} ${getLocalUrl(url)}`;
+									subtask.title = template`{red Failed} ${getLocalUrl(url)}`;
 								}
 							}
 						})),
@@ -168,13 +169,13 @@ export default class Validate extends Command {
 					if (errors.length) {
 						errors.forEach((error) => this.warn(error));
 						this.error(
-							chalk`{red.bold Validation failed} for {red ${errors.length}/${total}} ${n(
+							template`{red.bold Validation failed} for {red ${errors.length}/${total}} ${n(
 								total,
 								'page'
 							)}`
 						);
 					} else {
-						task.title = chalk`{green.bold Validation passed} for {green ${total}/${total}} ${n(
+						task.title = template`{green.bold Validation passed} for {green ${total}/${total}} ${n(
 							total,
 							'page'
 						)}`;
@@ -236,8 +237,8 @@ export default class Validate extends Command {
 
 	async getPageUrls(ctx: Ctx): Promise<{ urls: string[]; source: string }> {
 		const { url, crawl, sitemap } = ctx.config.validate;
-		let urls: string[] = [];
-		let source = '';
+		let urls: string[];
+		let source: string;
 		if (url) {
 			if (!isValidUrl(url)) {
 				throw new Error(
@@ -263,16 +264,15 @@ export default class Validate extends Command {
 
 	async getPageUrlsFromSitemap(ctx: Ctx): Promise<string[]> {
 		const { sitemap } = ctx.config.validate;
-		let contents;
 		if (isUrl(sitemap)) {
 			try {
-				contents = await fetch(sitemap).then((res) => res.text());
+				await fetch(sitemap).then((res) => res.text());
 			} catch (error) {
 				throw new Error(`Error fetching sitemap: ${error}`);
 			}
 		} else {
 			try {
-				contents = await fs.readFile(join(process.cwd(), sitemap), 'utf8');
+				await fs.readFile(join(process.cwd(), sitemap), 'utf8');
 			} catch (error) {
 				throw new Error(`Error reading sitemap: ${error}`);
 			}
@@ -304,7 +304,7 @@ export default class Validate extends Command {
 				await test();
 			} catch (error) {
 				throw new Error(
-					chalk`Validation {red failed} for {magenta ${getLocalUrl(url)}}: ${error}`
+					template`Validation {red failed} for {magenta ${getLocalUrl(url)}}: ${error}`
 				);
 			}
 		}
