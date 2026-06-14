@@ -1,8 +1,0 @@
-{
-  "require": ["test/helpers/init.js"],
-  "watch-extensions": ["ts"],
-  "node-option": ["import=tsx"],
-  "recursive": true,
-  "reporter": "spec",
-  "timeout": 60000
-}

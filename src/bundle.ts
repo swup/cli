@@ -1,3 +1,5 @@
+import { resolve } from 'node:path';
+
 import { build, type Format } from 'tsdown';
 
 interface PluginPackage {
@@ -9,6 +11,8 @@ interface PluginPackage {
 interface BundleOptions {
 	/** Watch for changes and rebuild (development mode) */
 	watch?: boolean;
+	/** Directory of the package to bundle. Defaults to `process.cwd()` */
+	cwd?: string;
 }
 
 /*
@@ -24,7 +28,7 @@ interface BundleOptions {
  */
 export async function bundlePackage(
 	pckg: unknown,
-	{ watch = false }: BundleOptions = {}
+	{ watch = false, cwd = process.cwd() }: BundleOptions = {}
 ): Promise<void> {
 	const pkg = (pckg ?? {}) as PluginPackage;
 
@@ -32,11 +36,15 @@ export async function bundlePackage(
 		throw new Error('package.json missing `source` property');
 	}
 
-	const entry = { index: pkg.source };
+	// Resolve to absolute paths so bundling never depends on `process.cwd()`,
+	// which keeps relative CSS imports resolvable regardless of the caller.
+	const entry = { index: resolve(cwd, pkg.source) };
+	const outDir = resolve(cwd, 'dist');
 	const globalName = pkg.amdName;
 
 	const shared = {
 		entry,
+		outDir,
 		platform: 'browser' as const,
 		config: false as const,
 		css: { minify: true },
