@@ -2,7 +2,7 @@ import * as fs from 'fs/promises';
 import { join } from 'path';
 
 import { Args, Command, Flags } from '@oclif/core';
-import chalk from 'chalk';
+import template from 'chalk-template';
 import { Listr } from 'listr2';
 import { rimraf } from 'rimraf';
 import { kebabCase, startCase, upperFirst } from 'lodash-es';
@@ -72,7 +72,7 @@ export default class Create extends Command {
 		if (type !== Type.theme && args.name.match(/theme$/i)) {
 			type = Type.theme;
 			this.log(
-				chalk`Provided name {magenta ${args.name}} ends with {magenta Theme}. Creating a theme instead.`
+				template`Provided name {magenta ${args.name}} ends with {magenta Theme}. Creating a theme instead.`
 			);
 		}
 
@@ -80,7 +80,7 @@ export default class Create extends Command {
 		const dir = names.kebab;
 		const path = join(process.cwd(), dir);
 
-		this.log(chalk`Creating new ${type} {magenta ${names.pascal}}...`);
+		this.log(template`Creating new ${type} {magenta ${names.pascal}}...`);
 
 		const ctx: Ctx = { type, names, dir, path, repo };
 		const tasks = [
@@ -93,7 +93,7 @@ export default class Create extends Command {
 		];
 		await new Listr<Ctx>(tasks, { ctx }).run();
 
-		this.log(chalk`Created ${type} {green ${names.pascal}}`);
+		this.log(template`Created ${type} {green ${names.pascal}}`);
 	}
 
 	async catch(error: Error) {

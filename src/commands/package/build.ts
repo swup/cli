@@ -1,5 +1,5 @@
 import { Command, Flags } from '@oclif/core';
-import chalk from 'chalk';
+import template from 'chalk-template';
 import { Listr } from 'listr2';
 
 import { bundlePackage } from '../../bundle.js';
@@ -50,8 +50,8 @@ export default class Build extends Command {
 				{
 					title: 'Bundle package',
 					task: async (ctx, task) => {
-						// @ts-ignore
-						task.title = chalk`Bundle package {magenta ${ctx.pckg?.name}}`;
+						// @ts-ignore: ctx.pckg is typed as unknown
+						task.title = template`Bundle package {magenta ${ctx.pckg?.name}}`;
 						await bundlePackage(ctx.pckg);
 					}
 				}

@@ -3,7 +3,7 @@ import { URL } from 'url';
 import { chromium } from 'playwright';
 import type { Browser, Page } from 'playwright';
 import Crawler from 'crawler';
-import chalk from 'chalk';
+import template from 'chalk-template';
 
 import {
 	getLocalUrl,
@@ -147,29 +147,26 @@ export function crawlSiteForUrls(url: string): Promise<string[]> {
 	const base = new URL(url);
 	const urls: string[] = [];
 
-	const options: Crawler.CreateCrawlerOptions = {
-		maxConnections: 10,
-		skipDuplicates: true
-	};
-
 	return new Promise((resolve) => {
 		const crawler = new Crawler({
-			...options,
-			callback: (error, { request, statusCode, headers, $ }, done) => {
+			maxConnections: 10,
+			skipDuplicates: true,
+			callback: (error, { options, statusCode, headers, $ }, done) => {
+				const href = String(options.url ?? '');
 				if (error) {
 					console.error(error);
 					return done();
 				}
 				if (statusCode < 200 || statusCode >= 400) {
 					console.warn(
-						chalk`{yellow !} Received status {yellow ${statusCode}} {dim on} ${getLocalUrl(request.uri.href)}`
+						template`{yellow !} Received status {yellow ${statusCode}} {dim on} ${getLocalUrl(href)}`
 					);
 					return done();
 				}
 				if (!isHtmlContentType(headers)) {
 					return done();
 				}
-				urls.push(request.uri.href);
+				urls.push(href);
 				$('a[href]:not([download])').each((i, el) => {
 					const href = removeHash(String($(el).attr('href')).trim());
 					const url = new URL(href, base);
