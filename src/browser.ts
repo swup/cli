@@ -129,14 +129,14 @@ export async function validateAnimationStyles(page: Page, selector: string, styl
 	const after = await getStyleProperties(page, selector, styles);
 	await removeChangingClass(page);
 
-	if (!Object.keys(before).length && !Object.keys(after).length) {
+	if (Object.keys(before).length === 0 && Object.keys(after).length === 0) {
 		throw new Error(`Styles not found on element: ${selector} (${styles.join(', ')})`);
 	}
 
-	for (const prop of Object.keys(before)) {
-		if (before[prop] === after[prop]) {
-			throw new Error(`Styles not changed on element: ${selector} (${prop})`);
-		}
+	// At least one style must change: a fade doesn't touch transform and vice versa
+	const changed = styles.some((prop) => before[prop] !== after[prop]);
+	if (!changed) {
+		throw new Error(`Styles not changed on element: ${selector} (${styles.join(', ')})`);
 	}
 }
 
