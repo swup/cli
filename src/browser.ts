@@ -111,7 +111,7 @@ export async function getAnimationDuration(page: Page, selector: string): Promis
 
 export async function validateAnimationDuration(page: Page, selector: string) {
 	await addChangingClass(page);
-	const duration = getAnimationDuration(page, selector);
+	const duration = await getAnimationDuration(page, selector);
 	await removeChangingClass(page);
 	if (!duration) {
 		throw new Error(`Missing animation duration on element: ${selector}`);
