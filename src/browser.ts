@@ -11,8 +11,7 @@ import {
 	isHtmlContentType,
 	isLocalUrl,
 	isValidUrl,
-	removeHash,
-	wait
+	removeHash
 } from './util.js';
 
 type Styles = Record<string, string>;
@@ -27,7 +26,8 @@ export async function createBrowser(): Promise<{
 }
 
 export async function visitPage(browser: Browser, url: string) {
-	const page = await browser.newPage();
+	// Bypass CSP: validateAnimationStyles injects an inline <style> tag
+	const page = await browser.newPage({ bypassCSP: true });
 	await page.goto(url, { waitUntil: 'domcontentloaded' });
 	return page;
 }
@@ -121,13 +121,20 @@ export async function validateAnimationStyles(page: Page, selector: string, styl
 		throw new Error(`Element not found: ${selector}`);
 	}
 
+	// Freeze transitions so computed styles jump straight to their end values.
+	// No waiting for the animation: that's timing-dependent and flaky under load.
+	// The duration itself is checked by validateAnimationDuration.
+	const freeze = await page.addStyleTag({
+		content:
+			'*, *::before, *::after { transition: none !important; animation: none !important; }'
+	});
 	await addChangingClass(page);
-	const duration = await getAnimationDuration(page, selector);
 	const before = await getStyleProperties(page, selector, styles);
 	await addAnimatingClass(page);
-	await wait(duration + 100);
 	const after = await getStyleProperties(page, selector, styles);
+	await page.evaluate(() => document.documentElement.classList.remove('is-animating'));
 	await removeChangingClass(page);
+	await freeze.evaluate((el) => (el as Element).remove());
 
 	if (Object.keys(before).length === 0 && Object.keys(after).length === 0) {
 		throw new Error(`Styles not found on element: ${selector} (${styles.join(', ')})`);
