@@ -265,6 +265,10 @@ export default class Validate extends Command {
 		}
 
 		urls = [...new Set(urls)];
+		if (urls.length === 0) {
+			throw new Error(`No pages found in ${source}.`);
+		}
+
 		return { urls, source };
 	}
 

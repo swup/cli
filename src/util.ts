@@ -37,11 +37,18 @@ function decodeXmlEntities(str: string): string {
 export async function readSitemapUrls(sitemap: string): Promise<string[]> {
 	let contents: string;
 	if (isUrl(sitemap)) {
+		let res: Response;
 		try {
-			contents = await fetch(sitemap).then((res) => res.text());
+			res = await fetch(sitemap);
 		} catch (error) {
 			throw new Error(`Error fetching sitemap: ${error}`);
 		}
+
+		if (!res.ok) {
+			throw new Error(`Error fetching sitemap: HTTP ${res.status} for ${sitemap}`);
+		}
+
+		contents = await res.text();
 	} else {
 		try {
 			contents = await fs.readFile(resolve(process.cwd(), sitemap), 'utf8');

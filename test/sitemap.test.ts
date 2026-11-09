@@ -6,6 +6,7 @@ import { join } from 'node:path';
 
 import { expect } from 'chai';
 
+import Validate from '../src/commands/validate.js';
 import { readSitemapUrls } from '../src/util.js';
 
 describe('readSitemapUrls', () => {
@@ -15,7 +16,12 @@ describe('readSitemapUrls', () => {
 	before(async () => {
 		server = createServer((req, res) => {
 			res.setHeader('content-type', 'application/xml');
-			if (req.url === '/index.xml') {
+			if (req.url === '/missing.xml') {
+				res.statusCode = 404;
+				res.end('<html>Not found</html>');
+			} else if (req.url === '/empty.xml') {
+				res.end('<urlset></urlset>');
+			} else if (req.url === '/index.xml') {
 				res.end(
 					`<sitemapindex><sitemap><loc>${base}/pages.xml</loc></sitemap></sitemapindex>`
 				);
@@ -59,5 +65,21 @@ describe('readSitemapUrls', () => {
 			`${base}/a`,
 			`${base}/b`
 		]);
+	});
+
+	it('throws on a non-OK HTTP status', async () => {
+		const error = await readSitemapUrls(`${base}/missing.xml`).catch((error) => error);
+		expect(error).to.be.instanceOf(Error);
+		expect(error.message).to.contain('HTTP 404');
+	});
+
+	it('makes validate fail if the sitemap has no pages', async () => {
+		const ctx = { config: { validate: { sitemap: `${base}/empty.xml` } } };
+		const error = await Validate.prototype.getPageUrls
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			.call({} as any, ctx as any)
+			.catch((error: Error) => error);
+		expect(error).to.be.instanceOf(Error);
+		expect((error as Error).message).to.contain('No pages found');
 	});
 });
