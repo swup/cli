@@ -26,7 +26,8 @@ export async function createBrowser(): Promise<{
 }
 
 export async function visitPage(browser: Browser, url: string) {
-	const page = await browser.newPage();
+	// Bypass CSP: validateAnimationStyles injects an inline <style> tag
+	const page = await browser.newPage({ bypassCSP: true });
 	await page.goto(url, { waitUntil: 'domcontentloaded' });
 	return page;
 }
