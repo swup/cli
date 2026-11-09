@@ -13,7 +13,7 @@ import {
 	validateAnimationStyles,
 	visitPage
 } from '../browser.js';
-import { getLocalUrl, isUrl, isValidUrl, n } from '../util.js';
+import { decodeXmlEntities, getLocalUrl, isUrl, isValidUrl, n } from '../util.js';
 import { loadConfig, type Config } from '../config.js';
 
 interface Ctx {
@@ -262,8 +262,16 @@ export default class Validate extends Command {
 	}
 
 	async getPageUrlsFromSitemap(ctx: Ctx): Promise<string[]> {
-		const { sitemap } = ctx.config.validate;
-		let contents;
+		return await this.readSitemapUrls(ctx.config.validate.sitemap);
+	}
+
+	/**
+	 * Read all page URLs from a sitemap file or URL.
+	 * Sitemap indexes (e.g. wp-sitemap.xml) are followed recursively.
+	 * @see https://www.sitemaps.org/protocol.html
+	 */
+	async readSitemapUrls(sitemap: string): Promise<string[]> {
+		let contents: string;
 		if (isUrl(sitemap)) {
 			try {
 				contents = await fetch(sitemap).then((res) => res.text());
@@ -278,8 +286,16 @@ export default class Validate extends Command {
 			}
 		}
 
-		// return (JSON.parse(parser.toJson(sitemap)).urlset.url.map(i => i.loc))
-		return [];
+		const locs = [...contents.matchAll(/<loc>\s*(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?\s*<\/loc>/gs)]
+			.map(([, loc]) => decodeXmlEntities(loc.trim()))
+			.filter((loc) => isValidUrl(loc));
+
+		if (/<sitemapindex[\s>]/.test(contents)) {
+			const nested = await Promise.all(locs.map((loc) => this.readSitemapUrls(loc)));
+			return nested.flat();
+		}
+
+		return locs;
 	}
 
 	async validatePage(ctx: Ctx, url: string): Promise<void> {

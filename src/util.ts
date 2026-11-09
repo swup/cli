@@ -15,6 +15,15 @@ export function isUrl(str: string): boolean {
 	return /^https?:\/\//.test(str);
 }
 
+export function decodeXmlEntities(str: string): string {
+	return str
+		.replace(/&lt;/g, '<')
+		.replace(/&gt;/g, '>')
+		.replace(/&quot;/g, '"')
+		.replace(/&apos;/g, "'")
+		.replace(/&amp;/g, '&');
+}
+
 export async function fileExists(path: string): Promise<boolean> {
 	try {
 		await fs.access(path);
