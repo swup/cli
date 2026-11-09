@@ -40,24 +40,13 @@ export async function countElementsOnPage(page: Page, selector: string): Promise
 	return await page.evaluate((selector) => document.querySelectorAll(selector).length, selector);
 }
 
-export async function getNumberOfContainers(page: Page, selectors: string[]): Promise<number> {
-	return await countElementsOnPage(page, selectors.join(', '));
-}
-
-export async function validateNumberOfContainers(
-	page: Page,
-	url: string,
-	expected: number,
-	containers: string[]
-) {
-	const received = await getNumberOfContainers(page, containers);
-	if (received !== expected) {
-		return {
-			text: 'Incorrect number of containers',
-			expected,
-			received,
-			page: url
-		};
+export async function validateContainers(page: Page, containers: string[]) {
+	for (const selector of containers) {
+		// eslint-disable-next-line no-await-in-loop
+		const count = await countElementsOnPage(page, selector);
+		if (count !== 1) {
+			throw new Error(`Expected exactly one container ${selector}, found ${count}`);
+		}
 	}
 }
 

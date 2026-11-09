@@ -1,5 +1,6 @@
-import * as fs from 'fs/promises';
-import { URL } from 'url';
+import * as fs from 'node:fs/promises';
+import { resolve } from 'node:path';
+import { URL } from 'node:url';
 
 import { camelCase, upperFirst } from 'lodash-es';
 
@@ -15,13 +16,48 @@ export function isUrl(str: string): boolean {
 	return /^https?:\/\//.test(str);
 }
 
-export function decodeXmlEntities(str: string): string {
+function decodeXmlEntities(str: string): string {
 	return str
 		.replaceAll('&lt;', '<')
 		.replaceAll('&gt;', '>')
 		.replaceAll('&quot;', '"')
 		.replaceAll('&apos;', "'")
 		.replaceAll('&amp;', '&');
+}
+
+/**
+ * Read all page URLs from a sitemap file or URL.
+ * Sitemap indexes (e.g. wp-sitemap.xml) are followed recursively.
+ * @see https://www.sitemaps.org/protocol.html
+ * @param sitemap Local file path or URL
+ * @returns All page URLs found
+ */
+export async function readSitemapUrls(sitemap: string): Promise<string[]> {
+	let contents: string;
+	if (isUrl(sitemap)) {
+		try {
+			contents = await fetch(sitemap).then((res) => res.text());
+		} catch (error) {
+			throw new Error(`Error fetching sitemap: ${error}`);
+		}
+	} else {
+		try {
+			contents = await fs.readFile(resolve(process.cwd(), sitemap), 'utf8');
+		} catch (error) {
+			throw new Error(`Error reading sitemap: ${error}`);
+		}
+	}
+
+	const locs = [...contents.matchAll(/<loc>\s*(?:<!\[CDATA\[)?(.*?)(?:]]>)?\s*<\/loc>/gs)]
+		.map(([, loc]) => decodeXmlEntities(loc.trim()))
+		.filter((loc) => isValidUrl(loc));
+
+	if (/<sitemapindex[\s>]/.test(contents)) {
+		const nested = await Promise.all(locs.map((loc) => readSitemapUrls(loc)));
+		return nested.flat();
+	}
+
+	return locs;
 }
 
 export async function fileExists(path: string): Promise<boolean> {

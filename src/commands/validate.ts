@@ -1,6 +1,3 @@
-import * as fs from 'fs/promises';
-import { resolve } from 'path';
-
 import { Command, Flags } from '@oclif/core';
 import chalk from 'chalk';
 import { Listr, ListrTask } from 'listr2';
@@ -11,9 +8,10 @@ import {
 	createBrowser,
 	validateAnimationDuration,
 	validateAnimationStyles,
+	validateContainers,
 	visitPage
 } from '../browser.js';
-import { decodeXmlEntities, getLocalUrl, isUrl, isValidUrl, n } from '../util.js';
+import { getLocalUrl, isValidUrl, n, readSitemapUrls } from '../util.js';
 import { loadConfig, type Config } from '../config.js';
 
 interface Ctx {
@@ -207,7 +205,6 @@ export default class Validate extends Command {
 	}
 
 	async catch(error: Error) {
-		// this.error(error as Error)
 		throw error;
 	}
 
@@ -253,7 +250,7 @@ export default class Validate extends Command {
 			}
 		} else if (sitemap) {
 			source = 'parsed sitemap';
-			urls = await this.getPageUrlsFromSitemap(ctx);
+			urls = await readSitemapUrls(sitemap);
 		} else {
 			throw new Error('You must specify either a url or a sitemap to validate.');
 		}
@@ -261,70 +258,37 @@ export default class Validate extends Command {
 		return { urls, source };
 	}
 
-	async getPageUrlsFromSitemap(ctx: Ctx): Promise<string[]> {
-		return this.readSitemapUrls(ctx.config.validate.sitemap);
-	}
-
-	/**
-	 * Read all page URLs from a sitemap file or URL.
-	 * Sitemap indexes (e.g. wp-sitemap.xml) are followed recursively.
-	 * @see https://www.sitemaps.org/protocol.html
-	 * @param sitemap Local file path or URL
-	 * @returns All page URLs found
-	 */
-	async readSitemapUrls(sitemap: string): Promise<string[]> {
-		let contents: string;
-		if (isUrl(sitemap)) {
-			try {
-				contents = await fetch(sitemap).then((res) => res.text());
-			} catch (error) {
-				throw new Error(`Error fetching sitemap: ${error}`);
-			}
-		} else {
-			try {
-				contents = await fs.readFile(resolve(process.cwd(), sitemap), 'utf8');
-			} catch (error) {
-				throw new Error(`Error reading sitemap: ${error}`);
-			}
-		}
-
-		const locs = [...contents.matchAll(/<loc>\s*(?:<!\[CDATA\[)?(.*?)(?:]]>)?\s*<\/loc>/gs)]
-			.map(([, loc]) => decodeXmlEntities(loc.trim()))
-			.filter((loc) => isValidUrl(loc));
-
-		if (/<sitemapindex[\s>]/.test(contents)) {
-			const nested = await Promise.all(locs.map((loc) => this.readSitemapUrls(loc)));
-			return nested.flat();
-		}
-
-		return locs;
-	}
-
 	async validatePage(ctx: Ctx, url: string): Promise<void> {
 		const { tests, styles } = ctx.config.validate;
-		const { animationSelector } = ctx.config.swup;
+		const { animationSelector, containers } = ctx.config.swup;
 		const { browser } = ctx;
 		const page = await visitPage(browser!, url);
 		const allChecks = {
+			containers: () => validateContainers(page, containers),
 			'transition-duration': () => validateAnimationDuration(page, animationSelector),
 			'transition-styles': () => validateAnimationStyles(page, animationSelector, styles)
 		};
 		const checks = Object.entries(allChecks).filter(
 			([test]) => !tests.length || tests.includes(test)
 		);
-		if (!checks.length) {
+		if (checks.length === 0) {
 			throw new Error(
 				`No valid tests specified. Available tests: ${Object.keys(allChecks).join(', ')}`
 			);
 		}
-		for (const [, test] of checks) {
-			try {
+
+		try {
+			// Run checks one after another: they toggle classes on the same page
+			for (const [, test] of checks) {
+				// eslint-disable-next-line no-await-in-loop
 				await test();
-			} catch (error) {
-				throw new Error(
-					chalk`Validation {red failed} for {magenta ${getLocalUrl(url)}}: ${error}`
-				);
 			}
+		} catch (error) {
+			throw new Error(
+				chalk`Validation {red failed} for {magenta ${getLocalUrl(url)}}: ${error}`
+			);
+		} finally {
+			await page.close();
 		}
 	}
 }
