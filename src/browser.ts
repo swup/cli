@@ -102,11 +102,18 @@ async function addAnimatingClass(page: Page) {
 	await page.evaluate(() => document.documentElement.classList.add('is-animating'));
 }
 
+/**
+ * Get the animation duration of an element in milliseconds.
+ * Computed styles always report durations in seconds (e.g. `0.3s`).
+ * @param page The page to evaluate
+ * @param selector The animated element
+ * @returns The longer of transition and animation duration
+ */
 export async function getAnimationDuration(page: Page, selector: string): Promise<number> {
 	const transition = parseFloat(await getStyleProperty(page, selector, 'transition-duration'));
 	const animation = parseFloat(await getStyleProperty(page, selector, 'animation-duration'));
 	const duration = Math.max(transition, animation);
-	return duration;
+	return duration * 1000;
 }
 
 export async function validateAnimationDuration(page: Page, selector: string) {
