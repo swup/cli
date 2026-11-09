@@ -154,30 +154,29 @@ export function crawlSiteForUrls(url: string): Promise<string[]> {
 	const base = new URL(url);
 	const urls: string[] = [];
 
-	const options: Crawler.CreateCrawlerOptions = {
-		maxConnections: 10,
-		skipDuplicates: true
-	};
-
 	return new Promise((resolve) => {
 		const crawler = new Crawler({
-			...options,
-			callback: (error, { request, statusCode, headers, $ }, done) => {
+			maxConnections: 10,
+			skipDuplicates: true,
+			callback: (error, { url: href, statusCode, headers, $ }, release) => {
+				const done = release as () => void;
 				if (error) {
 					console.error(error);
 					return done();
 				}
 				if (statusCode < 200 || statusCode >= 400) {
 					console.warn(
-						chalk`{yellow !} Received status {yellow ${statusCode}} {dim on} ${getLocalUrl(request.uri.href)}`
+						chalk`{yellow !} Received status {yellow ${statusCode}} {dim on} ${getLocalUrl(
+							href
+						)}`
 					);
 					return done();
 				}
 				if (!isHtmlContentType(headers)) {
 					return done();
 				}
-				urls.push(request.uri.href);
-				$('a[href]:not([download])').each((i, el) => {
+				urls.push(href);
+				$('a[href]:not([download])').each((_: number, el: unknown) => {
 					const href = removeHash(String($(el).attr('href')).trim());
 					const url = new URL(href, base);
 					if (isValidUrl(url)) {
