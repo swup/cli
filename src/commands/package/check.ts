@@ -18,13 +18,13 @@ export default class Check extends Command {
 			[
 				{
 					title: 'Load package info',
-					task: async () => {
+					async task() {
 						ctx.pckg = await loadPackageInfo();
 					}
 				},
 				{
 					title: 'Check package info',
-					task: async (ctx) => {
+					async task(ctx) {
 						const { errors } = checkPluginPackageInfo(ctx.pckg);
 						if (errors?.length) {
 							throw new Error(errors.join('\n'));

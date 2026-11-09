@@ -5,7 +5,9 @@ import { URL } from 'node:url';
 import { camelCase, upperFirst } from 'lodash-es';
 
 export function wait(ms: number): Promise<void> {
-	return new Promise((resolve) => setTimeout(resolve, ms));
+	return new Promise((resolve) => {
+		setTimeout(resolve, ms);
+	});
 }
 
 export function pascalCase(str: string): string {
@@ -64,15 +66,16 @@ export async function fileExists(path: string): Promise<boolean> {
 	try {
 		await fs.access(path);
 		return true;
-	} catch (error) {
+	} catch {
 		return false;
 	}
 }
 
 export async function isDirectory(path: string): Promise<boolean> {
 	try {
-		return (await fs.lstat(path)).isDirectory();
-	} catch (error) {
+		const stats = await fs.lstat(path);
+		return stats.isDirectory();
+	} catch {
 		return false;
 	}
 }
@@ -83,7 +86,7 @@ export async function isEmptyDirectory(path: string): Promise<boolean> {
 		const entry = await directory.read();
 		await directory.close();
 		return entry === null;
-	} catch (error) {
+	} catch {
 		return false;
 	}
 }
@@ -96,14 +99,17 @@ export function isValidUrl(s: string | URL, protocols: string[] = ['http', 'http
 	if (!s) {
 		return false;
 	}
+
 	try {
 		const { protocol } = new URL(String(s));
 		if (protocols?.length) {
-			return !!protocol && protocols.map((x) => `${x.toLowerCase()}:`).includes(protocol);
-		} else {
-			return true;
+			return (
+				Boolean(protocol) && protocols.map((x) => `${x.toLowerCase()}:`).includes(protocol)
+			);
 		}
-	} catch (err) {
+
+		return true;
+	} catch {
 		return false;
 	}
 }
@@ -113,12 +119,12 @@ export function isLocalUrl(url: URL, base: URL): boolean {
 }
 
 export function isAssetUrl(url: URL): boolean {
-	return !!url.pathname.match(/\.(jpe?g|a?png|gif|webp|mp4|webm|mov|pdf|docx?|zip|gz)$/i);
+	return Boolean(/\.(jpe?g|a?png|gif|webp|mp4|webm|mov|pdf|docx?|zip|gz)$/i.test(url.pathname));
 }
 
 export function isHtmlContentType(headers: Record<string, string>): boolean {
 	const contentType = headers['content-type'] || headers['Content-Type'];
-	return Boolean(contentType && contentType.match(/\bx?html\b/i));
+	return Boolean(contentType && /\bx?html\b/i.test(contentType));
 }
 
 export function removeHash(url: URL | string): string {

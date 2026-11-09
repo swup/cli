@@ -16,9 +16,13 @@ describe('readSitemapUrls', () => {
 		server = createServer((req, res) => {
 			res.setHeader('content-type', 'application/xml');
 			if (req.url === '/index.xml') {
-				res.end(`<sitemapindex><sitemap><loc>${base}/pages.xml</loc></sitemap></sitemapindex>`);
+				res.end(
+					`<sitemapindex><sitemap><loc>${base}/pages.xml</loc></sitemap></sitemapindex>`
+				);
 			} else {
-				res.end(`<urlset><url><loc>${base}/a</loc></url><url><loc>${base}/b</loc></url></urlset>`);
+				res.end(
+					`<urlset><url><loc>${base}/a</loc></url><url><loc>${base}/b</loc></url></urlset>`
+				);
 			}
 		});
 		await new Promise<void>((resolve) => {
@@ -51,6 +55,9 @@ describe('readSitemapUrls', () => {
 	});
 
 	it('follows sitemap indexes', async () => {
-		expect(await readSitemapUrls(`${base}/index.xml`)).to.deep.equal([`${base}/a`, `${base}/b`]);
+		expect(await readSitemapUrls(`${base}/index.xml`)).to.deep.equal([
+			`${base}/a`,
+			`${base}/b`
+		]);
 	});
 });

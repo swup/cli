@@ -1,4 +1,4 @@
-import { URL } from 'url';
+import { URL } from 'node:url';
 
 import { chromium } from 'playwright';
 import type { Browser, Page } from 'playwright';
@@ -22,7 +22,7 @@ export async function createBrowser(): Promise<{
 	teardown: () => Promise<void>;
 }> {
 	const browser = await chromium.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
-	const teardown = async () => await browser.close();
+	const teardown = async () => browser.close();
 	return { browser, teardown };
 }
 
@@ -33,11 +33,11 @@ export async function visitPage(browser: Browser, url: string) {
 }
 
 export async function elementExists(page: Page, selector: string): Promise<boolean> {
-	return await page.evaluate((selector) => !!document.querySelector(selector), selector);
+	return page.evaluate((selector) => Boolean(document.querySelector(selector)), selector);
 }
 
 export async function countElementsOnPage(page: Page, selector: string): Promise<number> {
-	return await page.evaluate((selector) => document.querySelectorAll(selector).length, selector);
+	return page.evaluate((selector) => document.querySelectorAll(selector).length, selector);
 }
 
 export async function validateContainers(page: Page, containers: string[]) {
@@ -55,7 +55,7 @@ export async function getStyleProperty(
 	selector: string,
 	property: string
 ): Promise<string> {
-	return await page.evaluate(
+	return page.evaluate(
 		({ selector, property }) => {
 			const element = document.querySelector(selector);
 			return element ? window.getComputedStyle(element).getPropertyValue(property) : '';
@@ -69,14 +69,11 @@ async function getStyleProperties(
 	selector: string,
 	properties: string[]
 ): Promise<Styles> {
-	const styles: Styles = {};
-	for (const prop of properties) {
-		const style = await getStyleProperty(page, selector, prop);
-		if (style) {
-			styles[prop] = style;
-		}
-	}
-	return styles;
+	const values = await Promise.all(
+		properties.map((prop) => getStyleProperty(page, selector, prop))
+	);
+	const entries = properties.map((prop, i) => [prop, values[i]]);
+	return Object.fromEntries(entries.filter(([, value]) => value));
 }
 
 async function addChangingClass(page: Page) {
@@ -99,8 +96,12 @@ async function addAnimatingClass(page: Page) {
  * @returns The longer of transition and animation duration
  */
 export async function getAnimationDuration(page: Page, selector: string): Promise<number> {
-	const transition = parseFloat(await getStyleProperty(page, selector, 'transition-duration'));
-	const animation = parseFloat(await getStyleProperty(page, selector, 'animation-duration'));
+	const transition = Number.parseFloat(
+		await getStyleProperty(page, selector, 'transition-duration')
+	);
+	const animation = Number.parseFloat(
+		await getStyleProperty(page, selector, 'animation-duration')
+	);
 	const duration = Math.max(transition, animation);
 	return duration * 1000;
 }
@@ -147,12 +148,13 @@ export function crawlSiteForUrls(url: string): Promise<string[]> {
 		const crawler = new Crawler({
 			maxConnections: 10,
 			skipDuplicates: true,
-			callback: (error, { url: href, statusCode, headers, $ }, release) => {
+			callback(error, { url: href, statusCode, headers, $ }, release) {
 				const done = release as () => void;
 				if (error) {
 					console.error(error);
 					return done();
 				}
+
 				if (statusCode < 200 || statusCode >= 400) {
 					console.warn(
 						chalk`{yellow !} Received status {yellow ${statusCode}} {dim on} ${getLocalUrl(
@@ -161,17 +163,22 @@ export function crawlSiteForUrls(url: string): Promise<string[]> {
 					);
 					return done();
 				}
+
 				if (!isHtmlContentType(headers)) {
 					return done();
 				}
+
 				urls.push(href);
 				$('a[href]:not([download])').each((_: number, el: unknown) => {
 					const href = removeHash(String($(el).attr('href')).trim());
 					const url = new URL(href, base);
-					if (isValidUrl(url)) {
-						if (!urls.includes(url.href) && isLocalUrl(url, base) && !isAssetUrl(url)) {
-							crawler.queue(url.href);
-						}
+					if (
+						isValidUrl(url) &&
+						!urls.includes(url.href) &&
+						isLocalUrl(url, base) &&
+						!isAssetUrl(url)
+					) {
+						crawler.queue(url.href);
 					}
 				});
 				setTimeout(done, 5);

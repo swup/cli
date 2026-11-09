@@ -26,6 +26,7 @@ export default class Validate extends Command {
 	static summary = 'Validate a swup-powered site';
 	static description =
 		'Crawl your site and validate that all pages are accessible and render correctly';
+
 	static examples = [
 		`<%= config.bin %> <%= command.id %>`,
 		`<%= config.bin %> <%= command.id %> --url https://mysite.com/about`,
@@ -33,6 +34,7 @@ export default class Validate extends Command {
 		`<%= config.bin %> <%= command.id %> --tests containers,transition-duration`,
 		`<%= config.bin %> <%= command.id %> --asynchronous`
 	];
+
 	static flags = {
 		url: Flags.string({
 			char: 'u',
@@ -108,11 +110,11 @@ export default class Validate extends Command {
 		const tasks: ListrTask<Ctx>[] = [
 			{
 				title: 'Set up',
-				task: async (ctx, task) => {
+				async task(ctx, task) {
 					return task.newListr(() => [
 						{
 							title: 'Launch browser',
-							task: async (ctx) => {
+							async task(ctx) {
 								const { browser, teardown } = await createBrowser();
 								ctx.browser = browser;
 								ctx.teardown = teardown;
@@ -134,17 +136,21 @@ export default class Validate extends Command {
 			},
 			{
 				title: 'Limit pages',
-				enabled: (ctx) => ctx.config.validate.limit > 0 && ctx.urls.length > ctx.config.validate.limit,
-				task: async (ctx, task) => {
+				enabled: (ctx) =>
+					ctx.config.validate.limit > 0 && ctx.urls.length > ctx.config.validate.limit,
+				async task(ctx, task) {
 					ctx.urls = ctx.urls.slice(0, ctx.config.validate.limit);
-					task.title = chalk`Limit to {blue ${ctx.urls.length} ${n(ctx.urls.length, 'page')}}`;
+					task.title = chalk`Limit to {blue ${ctx.urls.length} ${n(
+						ctx.urls.length,
+						'page'
+					)}}`;
 				}
 			},
 			{
 				title: 'Validate pages',
 				task: async (ctx, task) => {
 					return task.newListr(
-						ctx.urls.map((url, index) => ({
+						ctx.urls.map((url) => ({
 							title: `Validating ${getLocalUrl(url)}`,
 							task: async (_, subtask) => {
 								try {
@@ -163,13 +169,12 @@ export default class Validate extends Command {
 			{
 				title: 'Report results',
 				task: async ({ errors, urls: { length: total } }, task) => {
-					if (errors.length) {
-						errors.forEach((error) => this.warn(error));
+					if (errors.length > 0) {
+						for (const error of errors) this.warn(error);
 						this.error(
-							chalk`{red.bold Validation failed} for {red ${errors.length}/${total}} ${n(
-								total,
-								'page'
-							)}`
+							chalk`{red.bold Validation failed} for {red ${
+								errors.length
+							}/${total}} ${n(total, 'page')}`
 						);
 					} else {
 						task.title = chalk`{green.bold Validation passed} for {green ${total}/${total}} ${n(
@@ -185,7 +190,7 @@ export default class Validate extends Command {
 					task.newListr(() => [
 						{
 							title: 'Closing browser',
-							task: async (ctx) => {
+							async task(ctx) {
 								await ctx.teardown!();
 								ctx.teardown = undefined;
 							}
@@ -200,6 +205,7 @@ export default class Validate extends Command {
 			if (ctx.teardown) {
 				await ctx.teardown();
 			}
+
 			throw error;
 		}
 	}
@@ -228,7 +234,7 @@ export default class Validate extends Command {
 				styles: flags.styles.split(',').map((style) => style.trim())
 			}
 		};
-		return await loadConfig(overrides);
+		return loadConfig(overrides);
 	}
 
 	async getPageUrls(ctx: Ctx): Promise<{ urls: string[]; source: string }> {
@@ -241,6 +247,7 @@ export default class Validate extends Command {
 					`Invalid URL: ${url}. Make sure you include the protocol and hostname.`
 				);
 			}
+
 			if (crawl) {
 				source = 'crawled site';
 				urls = await crawlSiteForUrls(url);
@@ -254,6 +261,7 @@ export default class Validate extends Command {
 		} else {
 			throw new Error('You must specify either a url or a sitemap to validate.');
 		}
+
 		urls = [...new Set(urls)];
 		return { urls, source };
 	}
@@ -264,12 +272,12 @@ export default class Validate extends Command {
 		const { browser } = ctx;
 		const page = await visitPage(browser!, url);
 		const allChecks = {
-			containers: () => validateContainers(page, containers),
+			'containers': () => validateContainers(page, containers),
 			'transition-duration': () => validateAnimationDuration(page, animationSelector),
 			'transition-styles': () => validateAnimationStyles(page, animationSelector, styles)
 		};
 		const checks = Object.entries(allChecks).filter(
-			([test]) => !tests.length || tests.includes(test)
+			([test]) => tests.length === 0 || tests.includes(test)
 		);
 		if (checks.length === 0) {
 			throw new Error(

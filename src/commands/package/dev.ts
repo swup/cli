@@ -6,18 +6,21 @@ import { exec } from '../../shell.js';
 import { checkPluginPackageInfo, loadPackageInfo } from '../../package.js';
 
 interface Ctx {
-	pckg?: unknown;
+	pckg?: { name?: string };
 }
 
 export default class Dev extends Command {
 	static summary = 'Develop package';
-	static description = 'Build package code for development using microbundle and watch for changes';
+	static description =
+		'Build package code for development using microbundle and watch for changes';
+
 	static examples = ['<%= config.bin %> <%= command.id %>'];
 
 	static flags = {
 		check: Flags.boolean({
 			summary: 'Check package info',
-			description: 'Check for required package.json fields before bundling. Disable using --no-check.',
+			description:
+				'Check for required package.json fields before bundling. Disable using --no-check.',
 			required: false,
 			default: true,
 			allowNo: true
@@ -32,14 +35,14 @@ export default class Dev extends Command {
 			[
 				{
 					title: 'Load package info',
-					task: async (ctx) => {
+					async task(ctx) {
 						ctx.pckg = await loadPackageInfo();
 					}
 				},
 				{
 					title: 'Check package info',
 					enabled: () => flags.check,
-					task: async (ctx) => {
+					async task(ctx) {
 						const { errors } = checkPluginPackageInfo(ctx.pckg);
 						if (errors?.length) {
 							throw new Error(errors.join('\n'));
@@ -48,14 +51,15 @@ export default class Dev extends Command {
 				},
 				{
 					title: 'Bundle package',
-					task: async (ctx, task) => {
-						// @ts-ignore
+					async task(ctx, task) {
 						task.title = chalk`Bundle package {magenta ${ctx.pckg?.name}} and watch for changes`;
 						return task.newListr(() => [
 							{
 								title: 'Start watch mode',
-								task: async () => {
-									exec('BROWSERSLIST_ENV=development npx microbundle -f modern --css inline -w');
+								async task() {
+									exec(
+										'BROWSERSLIST_ENV=development npx microbundle -f modern --css inline -w'
+									);
 								}
 							}
 						]);
