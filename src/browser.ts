@@ -1,4 +1,4 @@
-import { URL } from 'url';
+import { URL } from 'node:url';
 
 import { chromium } from 'playwright';
 import type { Browser, Page } from 'playwright';
@@ -22,7 +22,7 @@ export async function createBrowser(): Promise<{
 	teardown: () => Promise<void>;
 }> {
 	const browser = await chromium.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
-	const teardown = async () => await browser.close();
+	const teardown = async () => browser.close();
 	return { browser, teardown };
 }
 
@@ -33,31 +33,20 @@ export async function visitPage(browser: Browser, url: string) {
 }
 
 export async function elementExists(page: Page, selector: string): Promise<boolean> {
-	return await page.evaluate((selector) => !!document.querySelector(selector), selector);
+	return page.evaluate((selector) => Boolean(document.querySelector(selector)), selector);
 }
 
 export async function countElementsOnPage(page: Page, selector: string): Promise<number> {
-	return await page.evaluate((selector) => document.querySelectorAll(selector).length, selector);
+	return page.evaluate((selector) => document.querySelectorAll(selector).length, selector);
 }
 
-export async function getNumberOfContainers(page: Page, selectors: string[]): Promise<number> {
-	return await countElementsOnPage(page, selectors.join(', '));
-}
-
-export async function validateNumberOfContainers(
-	page: Page,
-	url: string,
-	expected: number,
-	containers: string[]
-) {
-	const received = await getNumberOfContainers(page, containers);
-	if (received !== expected) {
-		return {
-			text: 'Incorrect number of containers',
-			expected,
-			received,
-			page: url
-		};
+export async function validateContainers(page: Page, containers: string[]) {
+	for (const selector of containers) {
+		// eslint-disable-next-line no-await-in-loop
+		const count = await countElementsOnPage(page, selector);
+		if (count !== 1) {
+			throw new Error(`Expected exactly one container ${selector}, found ${count}`);
+		}
 	}
 }
 
@@ -66,7 +55,7 @@ export async function getStyleProperty(
 	selector: string,
 	property: string
 ): Promise<string> {
-	return await page.evaluate(
+	return page.evaluate(
 		({ selector, property }) => {
 			const element = document.querySelector(selector);
 			return element ? window.getComputedStyle(element).getPropertyValue(property) : '';
@@ -80,14 +69,11 @@ async function getStyleProperties(
 	selector: string,
 	properties: string[]
 ): Promise<Styles> {
-	const styles: Styles = {};
-	for (const prop of properties) {
-		const style = await getStyleProperty(page, selector, prop);
-		if (style) {
-			styles[prop] = style;
-		}
-	}
-	return styles;
+	const values = await Promise.all(
+		properties.map((prop) => getStyleProperty(page, selector, prop))
+	);
+	const entries = properties.map((prop, i) => [prop, values[i]]);
+	return Object.fromEntries(entries.filter(([, value]) => value));
 }
 
 async function addChangingClass(page: Page) {
@@ -102,16 +88,27 @@ async function addAnimatingClass(page: Page) {
 	await page.evaluate(() => document.documentElement.classList.add('is-animating'));
 }
 
+/**
+ * Get the animation duration of an element in milliseconds.
+ * Computed styles always report durations in seconds (e.g. `0.3s`).
+ * @param page The page to evaluate
+ * @param selector The animated element
+ * @returns The longer of transition and animation duration
+ */
 export async function getAnimationDuration(page: Page, selector: string): Promise<number> {
-	const transition = parseFloat(await getStyleProperty(page, selector, 'transition-duration'));
-	const animation = parseFloat(await getStyleProperty(page, selector, 'animation-duration'));
+	const transition = Number.parseFloat(
+		await getStyleProperty(page, selector, 'transition-duration')
+	);
+	const animation = Number.parseFloat(
+		await getStyleProperty(page, selector, 'animation-duration')
+	);
 	const duration = Math.max(transition, animation);
-	return duration;
+	return duration * 1000;
 }
 
 export async function validateAnimationDuration(page: Page, selector: string) {
 	await addChangingClass(page);
-	const duration = getAnimationDuration(page, selector);
+	const duration = await getAnimationDuration(page, selector);
 	await removeChangingClass(page);
 	if (!duration) {
 		throw new Error(`Missing animation duration on element: ${selector}`);
@@ -132,14 +129,14 @@ export async function validateAnimationStyles(page: Page, selector: string, styl
 	const after = await getStyleProperties(page, selector, styles);
 	await removeChangingClass(page);
 
-	if (!Object.keys(before).length && !Object.keys(after).length) {
+	if (Object.keys(before).length === 0 && Object.keys(after).length === 0) {
 		throw new Error(`Styles not found on element: ${selector} (${styles.join(', ')})`);
 	}
 
-	for (const prop of Object.keys(before)) {
-		if (before[prop] === after[prop]) {
-			throw new Error(`Styles not changed on element: ${selector} (${prop})`);
-		}
+	// At least one style must change: a fade doesn't touch transform and vice versa
+	const changed = styles.some((prop) => before[prop] !== after[prop]);
+	if (!changed) {
+		throw new Error(`Styles not changed on element: ${selector} (${styles.join(', ')})`);
 	}
 }
 
@@ -147,36 +144,41 @@ export function crawlSiteForUrls(url: string): Promise<string[]> {
 	const base = new URL(url);
 	const urls: string[] = [];
 
-	const options: Crawler.CreateCrawlerOptions = {
-		maxConnections: 10,
-		skipDuplicates: true
-	};
-
 	return new Promise((resolve) => {
 		const crawler = new Crawler({
-			...options,
-			callback: (error, { request, statusCode, headers, $ }, done) => {
+			maxConnections: 10,
+			skipDuplicates: true,
+			callback(error, { url: href, statusCode, headers, $ }, release) {
+				const done = release as () => void;
 				if (error) {
 					console.error(error);
 					return done();
 				}
+
 				if (statusCode < 200 || statusCode >= 400) {
 					console.warn(
-						chalk`{yellow !} Received status {yellow ${statusCode}} {dim on} ${getLocalUrl(request.uri.href)}`
+						chalk`{yellow !} Received status {yellow ${statusCode}} {dim on} ${getLocalUrl(
+							href
+						)}`
 					);
 					return done();
 				}
+
 				if (!isHtmlContentType(headers)) {
 					return done();
 				}
-				urls.push(request.uri.href);
-				$('a[href]:not([download])').each((i, el) => {
+
+				urls.push(href);
+				$('a[href]:not([download])').each((_: number, el: unknown) => {
 					const href = removeHash(String($(el).attr('href')).trim());
 					const url = new URL(href, base);
-					if (isValidUrl(url)) {
-						if (!urls.includes(url.href) && isLocalUrl(url, base) && !isAssetUrl(url)) {
-							crawler.queue(url.href);
-						}
+					if (
+						isValidUrl(url) &&
+						!urls.includes(url.href) &&
+						isLocalUrl(url, base) &&
+						!isAssetUrl(url)
+					) {
+						crawler.queue(url.href);
 					}
 				});
 				setTimeout(done, 5);

@@ -4,13 +4,15 @@ module.exports = {
 		'eslint:recommended',
 		'oclif',
 		'oclif-typescript',
-		'plugin:prettier/recommended', // needs to be last
+		'plugin:prettier/recommended' // needs to be last
 	],
 	plugins: ['@typescript-eslint'],
 	/* First exclude everything, then re-include /src, then exclude tests */
 	ignorePatterns: ['/*', '!/src', '*.test.ts'],
 	rules: {
-		'no-unused-vars': ['error', { vars: 'all', args: 'none' }],
+		// The base rule reports TS enums and types as unused
+		'no-unused-vars': 'off',
+		'@typescript-eslint/no-unused-vars': ['error', { vars: 'all', args: 'none' }],
 		'@typescript-eslint/ban-ts-comment': ['error', { 'ts-ignore': 'allow-with-description' }],
 		'@typescript-eslint/unbound-method': 'off',
 		'@typescript-eslint/no-floating-promises': 'off',

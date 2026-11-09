@@ -1,4 +1,4 @@
-import { exec } from 'child_process';
+import { exec } from 'node:child_process';
 
 export function cloneRepo(repoUrl: string, destination: string): Promise<void> {
 	return new Promise((resolve, reject) => {
@@ -8,6 +8,7 @@ export function cloneRepo(repoUrl: string, destination: string): Promise<void> {
 					new Error(`Failed to clone repo. Error: ${error.message}. Stderr: ${stderr}`)
 				);
 			}
+
 			resolve();
 		});
 	});

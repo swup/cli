@@ -1,6 +1,3 @@
-import * as fs from 'fs/promises';
-import { join } from 'path';
-
 import { Command, Flags } from '@oclif/core';
 import chalk from 'chalk';
 import { Listr, ListrTask } from 'listr2';
@@ -11,9 +8,10 @@ import {
 	createBrowser,
 	validateAnimationDuration,
 	validateAnimationStyles,
+	validateContainers,
 	visitPage
 } from '../browser.js';
-import { getLocalUrl, isUrl, isValidUrl, n } from '../util.js';
+import { getLocalUrl, isValidUrl, n, readSitemapUrls } from '../util.js';
 import { loadConfig, type Config } from '../config.js';
 
 interface Ctx {
@@ -28,6 +26,7 @@ export default class Validate extends Command {
 	static summary = 'Validate a swup-powered site';
 	static description =
 		'Crawl your site and validate that all pages are accessible and render correctly';
+
 	static examples = [
 		`<%= config.bin %> <%= command.id %>`,
 		`<%= config.bin %> <%= command.id %> --url https://mysite.com/about`,
@@ -35,6 +34,7 @@ export default class Validate extends Command {
 		`<%= config.bin %> <%= command.id %> --tests containers,transition-duration`,
 		`<%= config.bin %> <%= command.id %> --asynchronous`
 	];
+
 	static flags = {
 		url: Flags.string({
 			char: 'u',
@@ -110,11 +110,11 @@ export default class Validate extends Command {
 		const tasks: ListrTask<Ctx>[] = [
 			{
 				title: 'Set up',
-				task: async (ctx, task) => {
+				async task(ctx, task) {
 					return task.newListr(() => [
 						{
 							title: 'Launch browser',
-							task: async (ctx) => {
+							async task(ctx) {
 								const { browser, teardown } = await createBrowser();
 								ctx.browser = browser;
 								ctx.teardown = teardown;
@@ -136,17 +136,21 @@ export default class Validate extends Command {
 			},
 			{
 				title: 'Limit pages',
-				enabled: (ctx) => ctx.config.validate.limit > 0 && ctx.urls.length > ctx.config.validate.limit,
-				task: async (ctx, task) => {
+				enabled: (ctx) =>
+					ctx.config.validate.limit > 0 && ctx.urls.length > ctx.config.validate.limit,
+				async task(ctx, task) {
 					ctx.urls = ctx.urls.slice(0, ctx.config.validate.limit);
-					task.title = chalk`Limit to {blue ${ctx.urls.length} ${n(ctx.urls.length, 'page')}}`;
+					task.title = chalk`Limit to {blue ${ctx.urls.length} ${n(
+						ctx.urls.length,
+						'page'
+					)}}`;
 				}
 			},
 			{
 				title: 'Validate pages',
 				task: async (ctx, task) => {
 					return task.newListr(
-						ctx.urls.map((url, index) => ({
+						ctx.urls.map((url) => ({
 							title: `Validating ${getLocalUrl(url)}`,
 							task: async (_, subtask) => {
 								try {
@@ -155,6 +159,8 @@ export default class Validate extends Command {
 								} catch (error) {
 									ctx.errors.push(error as Error);
 									subtask.title = chalk`{red Failed} ${getLocalUrl(url)}`;
+									// Rethrow to mark the task as failed, exitOnError: false keeps going
+									throw error;
 								}
 							}
 						})),
@@ -165,13 +171,12 @@ export default class Validate extends Command {
 			{
 				title: 'Report results',
 				task: async ({ errors, urls: { length: total } }, task) => {
-					if (errors.length) {
-						errors.forEach((error) => this.warn(error));
+					if (errors.length > 0) {
+						for (const error of errors) this.warn(error);
 						this.error(
-							chalk`{red.bold Validation failed} for {red ${errors.length}/${total}} ${n(
-								total,
-								'page'
-							)}`
+							chalk`{red.bold Validation failed} for {red ${
+								errors.length
+							}/${total}} ${n(total, 'page')}`
 						);
 					} else {
 						task.title = chalk`{green.bold Validation passed} for {green ${total}/${total}} ${n(
@@ -187,7 +192,7 @@ export default class Validate extends Command {
 					task.newListr(() => [
 						{
 							title: 'Closing browser',
-							task: async (ctx) => {
+							async task(ctx) {
 								await ctx.teardown!();
 								ctx.teardown = undefined;
 							}
@@ -202,12 +207,12 @@ export default class Validate extends Command {
 			if (ctx.teardown) {
 				await ctx.teardown();
 			}
+
 			throw error;
 		}
 	}
 
 	async catch(error: Error) {
-		// this.error(error as Error)
 		throw error;
 	}
 
@@ -215,7 +220,7 @@ export default class Validate extends Command {
 		const { flags } = await this.parse(Validate);
 		const overrides = {
 			swup: {
-				animationSelector: flags.animationSelector,
+				animationSelector: flags.animation,
 				containers: flags.containers.split(',').map((style) => style.trim())
 			},
 			validate: {
@@ -223,7 +228,7 @@ export default class Validate extends Command {
 				crawl: flags.crawl,
 				sitemap: flags.sitemap,
 				limit: Number(flags.limit),
-				asynchronous: flags.asynchronous,
+				parallel: flags.parallel,
 				tests: flags.tests
 					.split(',')
 					.map((style) => style.trim())
@@ -231,7 +236,7 @@ export default class Validate extends Command {
 				styles: flags.styles.split(',').map((style) => style.trim())
 			}
 		};
-		return await loadConfig(overrides);
+		return loadConfig(overrides);
 	}
 
 	async getPageUrls(ctx: Ctx): Promise<{ urls: string[]; source: string }> {
@@ -244,6 +249,7 @@ export default class Validate extends Command {
 					`Invalid URL: ${url}. Make sure you include the protocol and hostname.`
 				);
 			}
+
 			if (crawl) {
 				source = 'crawled site';
 				urls = await crawlSiteForUrls(url);
@@ -253,60 +259,50 @@ export default class Validate extends Command {
 			}
 		} else if (sitemap) {
 			source = 'parsed sitemap';
-			urls = await this.getPageUrlsFromSitemap(ctx);
+			urls = await readSitemapUrls(sitemap);
 		} else {
 			throw new Error('You must specify either a url or a sitemap to validate.');
 		}
-		urls = [...new Set(urls)];
-		return { urls, source };
-	}
 
-	async getPageUrlsFromSitemap(ctx: Ctx): Promise<string[]> {
-		const { sitemap } = ctx.config.validate;
-		let contents;
-		if (isUrl(sitemap)) {
-			try {
-				contents = await fetch(sitemap).then((res) => res.text());
-			} catch (error) {
-				throw new Error(`Error fetching sitemap: ${error}`);
-			}
-		} else {
-			try {
-				contents = await fs.readFile(join(process.cwd(), sitemap), 'utf8');
-			} catch (error) {
-				throw new Error(`Error reading sitemap: ${error}`);
-			}
+		urls = [...new Set(urls)];
+		if (urls.length === 0) {
+			throw new Error(`No pages found in ${source}.`);
 		}
 
-		// return (JSON.parse(parser.toJson(sitemap)).urlset.url.map(i => i.loc))
-		return [];
+		return { urls, source };
 	}
 
 	async validatePage(ctx: Ctx, url: string): Promise<void> {
 		const { tests, styles } = ctx.config.validate;
-		const { animationSelector } = ctx.config.swup;
+		const { animationSelector, containers } = ctx.config.swup;
 		const { browser } = ctx;
 		const page = await visitPage(browser!, url);
 		const allChecks = {
+			'containers': () => validateContainers(page, containers),
 			'transition-duration': () => validateAnimationDuration(page, animationSelector),
 			'transition-styles': () => validateAnimationStyles(page, animationSelector, styles)
 		};
 		const checks = Object.entries(allChecks).filter(
-			([test]) => !tests.length || tests.includes(test)
+			([test]) => tests.length === 0 || tests.includes(test)
 		);
-		if (!checks.length) {
+		if (checks.length === 0) {
 			throw new Error(
 				`No valid tests specified. Available tests: ${Object.keys(allChecks).join(', ')}`
 			);
 		}
-		for (const [, test] of checks) {
-			try {
+
+		try {
+			// Run checks one after another: they toggle classes on the same page
+			for (const [, test] of checks) {
+				// eslint-disable-next-line no-await-in-loop
 				await test();
-			} catch (error) {
-				throw new Error(
-					chalk`Validation {red failed} for {magenta ${getLocalUrl(url)}}: ${error}`
-				);
 			}
+		} catch (error) {
+			throw new Error(
+				chalk`Validation {red failed} for {magenta ${getLocalUrl(url)}}: ${error}`
+			);
+		} finally {
+			await page.close();
 		}
 	}
 }

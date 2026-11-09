@@ -1,10 +1,13 @@
-import * as fs from 'fs/promises';
-import { URL } from 'url';
+import * as fs from 'node:fs/promises';
+import { resolve } from 'node:path';
+import { URL } from 'node:url';
 
 import { camelCase, upperFirst } from 'lodash-es';
 
 export function wait(ms: number): Promise<void> {
-	return new Promise((resolve) => setTimeout(resolve, ms));
+	return new Promise((resolve) => {
+		setTimeout(resolve, ms);
+	});
 }
 
 export function pascalCase(str: string): string {
@@ -15,19 +18,71 @@ export function isUrl(str: string): boolean {
 	return /^https?:\/\//.test(str);
 }
 
+function decodeXmlEntities(str: string): string {
+	return str
+		.replaceAll('&lt;', '<')
+		.replaceAll('&gt;', '>')
+		.replaceAll('&quot;', '"')
+		.replaceAll('&apos;', "'")
+		.replaceAll('&amp;', '&');
+}
+
+/**
+ * Read all page URLs from a sitemap file or URL.
+ * Sitemap indexes (e.g. wp-sitemap.xml) are followed recursively.
+ * @see https://www.sitemaps.org/protocol.html
+ * @param sitemap Local file path or URL
+ * @returns All page URLs found
+ */
+export async function readSitemapUrls(sitemap: string): Promise<string[]> {
+	let contents: string;
+	if (isUrl(sitemap)) {
+		let res: Response;
+		try {
+			res = await fetch(sitemap);
+		} catch (error) {
+			throw new Error(`Error fetching sitemap: ${error}`);
+		}
+
+		if (!res.ok) {
+			throw new Error(`Error fetching sitemap: HTTP ${res.status} for ${sitemap}`);
+		}
+
+		contents = await res.text();
+	} else {
+		try {
+			contents = await fs.readFile(resolve(process.cwd(), sitemap), 'utf8');
+		} catch (error) {
+			throw new Error(`Error reading sitemap: ${error}`);
+		}
+	}
+
+	const locs = [...contents.matchAll(/<loc>\s*(?:<!\[CDATA\[)?(.*?)(?:]]>)?\s*<\/loc>/gs)]
+		.map(([, loc]) => decodeXmlEntities(loc.trim()))
+		.filter((loc) => isValidUrl(loc));
+
+	if (/<sitemapindex[\s>]/.test(contents)) {
+		const nested = await Promise.all(locs.map((loc) => readSitemapUrls(loc)));
+		return nested.flat();
+	}
+
+	return locs;
+}
+
 export async function fileExists(path: string): Promise<boolean> {
 	try {
 		await fs.access(path);
 		return true;
-	} catch (error) {
+	} catch {
 		return false;
 	}
 }
 
 export async function isDirectory(path: string): Promise<boolean> {
 	try {
-		return (await fs.lstat(path)).isDirectory();
-	} catch (error) {
+		const stats = await fs.lstat(path);
+		return stats.isDirectory();
+	} catch {
 		return false;
 	}
 }
@@ -38,7 +93,7 @@ export async function isEmptyDirectory(path: string): Promise<boolean> {
 		const entry = await directory.read();
 		await directory.close();
 		return entry === null;
-	} catch (error) {
+	} catch {
 		return false;
 	}
 }
@@ -51,14 +106,17 @@ export function isValidUrl(s: string | URL, protocols: string[] = ['http', 'http
 	if (!s) {
 		return false;
 	}
+
 	try {
 		const { protocol } = new URL(String(s));
 		if (protocols?.length) {
-			return !!protocol && protocols.map((x) => `${x.toLowerCase()}:`).includes(protocol);
-		} else {
-			return true;
+			return (
+				Boolean(protocol) && protocols.map((x) => `${x.toLowerCase()}:`).includes(protocol)
+			);
 		}
-	} catch (err) {
+
+		return true;
+	} catch {
 		return false;
 	}
 }
@@ -68,12 +126,12 @@ export function isLocalUrl(url: URL, base: URL): boolean {
 }
 
 export function isAssetUrl(url: URL): boolean {
-	return !!url.pathname.match(/\.(jpe?g|a?png|gif|webp|mp4|webm|mov|pdf|docx?|zip|gz)$/i);
+	return Boolean(/\.(jpe?g|a?png|gif|webp|mp4|webm|mov|pdf|docx?|zip|gz)$/i.test(url.pathname));
 }
 
 export function isHtmlContentType(headers: Record<string, string>): boolean {
 	const contentType = headers['content-type'] || headers['Content-Type'];
-	return Boolean(contentType && contentType.match(/\bx?html\b/i));
+	return Boolean(contentType && /\bx?html\b/i.test(contentType));
 }
 
 export function removeHash(url: URL | string): string {

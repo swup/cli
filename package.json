@@ -18,8 +18,6 @@
   "files": [
     "/bin",
     "/dist",
-    "/package-lock.json",
-    "/npm-shrinkwrap.json",
     "/oclif.manifest.json"
   ],
   "dependencies": {
@@ -41,13 +39,10 @@
     "typescript": "^5.2.2"
   },
   "devDependencies": {
-    "@oclif/test": "^2.5.6",
     "@types/chai": "^4.3.6",
-    "@types/crawler": "^1.2.3",
     "@types/lodash-es": "^4.17.9",
     "@types/mocha": "^10.0.1",
     "@types/node": "^20.7.0",
-    "@types/shelljs": "^0.8.12",
     "chai": "^4.0.0",
     "eslint": "^8.50.0",
     "eslint-config-oclif": "^5.0.0",
@@ -78,6 +73,7 @@
   "scripts": {
     "build": "shx rm -rf dist && tsc -b",
     "lint": "eslint . --ext .ts",
+    "format": "./bin/run.js package:format",
     "postpack": "shx rm -f oclif.manifest.json",
     "posttest": "npm run lint",
     "prepack": "npm run build && oclif manifest && oclif readme",
@@ -85,7 +81,7 @@
     "version": "npm run build && oclif readme && git add README.md"
   },
   "engines": {
-    "node": ">=12.0.0"
+    "node": ">=18.0.0"
   },
   "bugs": "https://github.com/swup/cli/issues",
   "keywords": [

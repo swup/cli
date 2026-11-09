@@ -1,5 +1,5 @@
-import * as fs from 'fs/promises';
-import { join } from 'path';
+import * as fs from 'node:fs/promises';
+import { join } from 'node:path';
 
 import { Args, Command, Flags } from '@oclif/core';
 import chalk from 'chalk';
@@ -33,6 +33,7 @@ export default class Create extends Command {
 	static summary = 'Create a swup plugin or theme';
 	static description =
 		'Generate a new swup plugin or theme from an official, best-practice template';
+
 	static examples = [
 		`<%= config.bin %> <%= command.id %> SwupExamplePlugin`,
 		`<%= config.bin %> <%= command.id %> SwupExampleTheme`
@@ -69,7 +70,7 @@ export default class Create extends Command {
 		} = await this.parse(Create);
 
 		let type = Type[flags.type as keyof typeof Type];
-		if (type !== Type.theme && args.name.match(/theme$/i)) {
+		if (type !== Type.theme && /theme$/i.test(args.name)) {
 			type = Type.theme;
 			this.log(
 				chalk`Provided name {magenta ${args.name}} ends with {magenta Theme}. Creating a theme instead.`
@@ -125,11 +126,14 @@ export default class Create extends Command {
 					`Unable to create directory ${ctx.dir}. A file of the same name already exists.`
 				);
 			}
+
 			if (!empty) {
 				throw new Error(`Directory ${ctx.dir} already exists and has files in it.`);
 			}
+
 			return;
 		}
+
 		try {
 			await fs.mkdir(ctx.path);
 		} catch (error) {
@@ -161,8 +165,8 @@ export default class Create extends Command {
 		const pluginPath = join(ctx.path, 'src/index.js');
 		try {
 			let data = await fs.readFile(pluginPath, 'utf8');
-			data = data.replace(/PluginName/g, ctx.names.pascal);
-			data = data.replace(/ThemeName/g, ctx.names.pascal);
+			data = data.replaceAll('PluginName', ctx.names.pascal);
+			data = data.replaceAll('ThemeName', ctx.names.pascal);
 			await fs.writeFile(pluginPath, data);
 		} catch (error) {
 			throw new Error(`Error updating plugin file: ${error}`);
@@ -198,22 +202,25 @@ export default class Create extends Command {
 		const readmePath = join(ctx.path, 'readme.md');
 		try {
 			let data = await fs.readFile(readmePath, 'utf8');
-			data = data.replace(
-				/ *\[comment\]: CLI-remove-start[\s\S]*\[comment\]: CLI-remove-end */g,
+			data = data.replaceAll(
+				/ *\[comment]: CLI-remove-start[\S\s]*\[comment]: CLI-remove-end */g,
 				''
 			);
-			data = data.replace(
-				/swup-\[(plugin-name|theme-name)\]-(plugin|theme)/g,
+			data = data.replaceAll(
+				/swup-\[(plugin-name|theme-name)]-(plugin|theme)/g,
 				ctx.names.kebab
 			);
-			data = data.replace(
-				/Swup \[(Plugin Name|Theme Name)\] (Plugin|Theme)/g,
+			data = data.replaceAll(
+				/Swup \[(Plugin Name|Theme Name)] (Plugin|Theme)/g,
 				ctx.names.title
 			);
-			data = data.replace(/ \[(Plugin Name|Theme Name)\]/g, ctx.names.title);
-			data = data.replace(/Swup\[(PluginName|ThemeName)\](Plugin|Theme)/g, ctx.names.pascal);
-			data = data.replace(/\[(PluginName|ThemeName)\]/g, ctx.names.pascal);
-			data = data.replace(/(SwupNamePlugin|SwupNameTheme)/g, ctx.names.pascal);
+			data = data.replaceAll(/ \[(Plugin Name|Theme Name)]/g, ctx.names.title);
+			data = data.replaceAll(
+				/Swup\[(PluginName|ThemeName)](Plugin|Theme)/g,
+				ctx.names.pascal
+			);
+			data = data.replaceAll(/\[(PluginName|ThemeName)]/g, ctx.names.pascal);
+			data = data.replaceAll(/(SwupNamePlugin|SwupNameTheme)/g, ctx.names.pascal);
 			data = `${data.trim()}\n`;
 			await fs.writeFile(readmePath, data);
 		} catch (error) {

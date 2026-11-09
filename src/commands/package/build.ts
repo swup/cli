@@ -6,7 +6,7 @@ import { exec } from '../../shell.js';
 import { checkPluginPackageInfo, loadPackageInfo } from '../../package.js';
 
 interface Ctx {
-	pckg?: unknown;
+	pckg?: { name?: string };
 }
 
 export default class Build extends Command {
@@ -17,7 +17,8 @@ export default class Build extends Command {
 	static flags = {
 		check: Flags.boolean({
 			summary: 'Check package info',
-			description: 'Check for required package.json fields before bundling. Disable using --no-check.',
+			description:
+				'Check for required package.json fields before bundling. Disable using --no-check.',
 			required: false,
 			default: true,
 			allowNo: true
@@ -32,14 +33,14 @@ export default class Build extends Command {
 			[
 				{
 					title: 'Load package info',
-					task: async (ctx) => {
+					async task(ctx) {
 						ctx.pckg = await loadPackageInfo();
 					}
 				},
 				{
 					title: 'Check package info',
 					enabled: () => flags.check,
-					task: async (ctx) => {
+					async task(ctx) {
 						const { errors } = checkPluginPackageInfo(ctx.pckg);
 						if (errors?.length) {
 							throw new Error(errors.join('\n'));
@@ -48,20 +49,23 @@ export default class Build extends Command {
 				},
 				{
 					title: 'Bundle package',
-					task: async (ctx, task) => {
-						// @ts-ignore
+					async task(ctx, task) {
 						task.title = chalk`Bundle package {magenta ${ctx.pckg?.name}}`;
 						return task.newListr(() => [
 							{
 								title: 'Create module bundle',
-								task: async () => {
-									exec('BROWSERSLIST_ENV=modern npx microbundle -f modern,esm,cjs --css inline');
+								async task() {
+									exec(
+										'BROWSERSLIST_ENV=modern npx microbundle -f modern,esm,cjs --css inline'
+									);
 								}
 							},
 							{
 								title: 'Create standalone bundle',
-								task: async () => {
-									exec('BROWSERSLIST_ENV=production npx microbundle -f umd --css inline --external none --define process.env.NODE_ENV=production');
+								async task() {
+									exec(
+										'BROWSERSLIST_ENV=production npx microbundle -f umd --css inline --external none --define process.env.NODE_ENV=production'
+									);
 								}
 							}
 						]);
