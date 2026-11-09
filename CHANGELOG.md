@@ -1,5 +1,9 @@
 # Changelog
 
+## [5.0.5] - 2026-11-09
+
+- fix flaky `swup validate --parallel` under load
+
 ## [5.0.4] - 2026-11-09
 
 - Many fixes for `swup validate`. Make the advertised commands actually do what's advertised:
@@ -69,6 +73,7 @@
 
 - Initial release
 
+[5.0.5]: https://github.com/swup/cli/releases/tag/5.0.5
 [5.0.4]: https://github.com/swup/cli/releases/tag/5.0.4
 [5.0.3]: https://github.com/swup/cli/releases/tag/5.0.3
 [5.0.2]: https://github.com/swup/cli/releases/tag/5.0.2
