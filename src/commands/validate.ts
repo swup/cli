@@ -215,7 +215,7 @@ export default class Validate extends Command {
 		const { flags } = await this.parse(Validate);
 		const overrides = {
 			swup: {
-				animationSelector: flags.animationSelector,
+				animationSelector: flags.animation,
 				containers: flags.containers.split(',').map((style) => style.trim())
 			},
 			validate: {
@@ -223,7 +223,7 @@ export default class Validate extends Command {
 				crawl: flags.crawl,
 				sitemap: flags.sitemap,
 				limit: Number(flags.limit),
-				asynchronous: flags.asynchronous,
+				parallel: flags.parallel,
 				tests: flags.tests
 					.split(',')
 					.map((style) => style.trim())
