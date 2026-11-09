@@ -14,7 +14,10 @@
   "homepage": "https://github.com/swup/cli",
   "license": "MIT",
   "main": "dist/index.js",
-  "repository": "swup/cli",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/swup/cli.git"
+  },
   "files": [
     "/bin",
     "/dist",
