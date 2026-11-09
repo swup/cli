@@ -1,5 +1,5 @@
 import * as fs from 'fs/promises';
-import { join } from 'path';
+import { resolve } from 'path';
 
 import { Command, Flags } from '@oclif/core';
 import chalk from 'chalk';
@@ -262,13 +262,15 @@ export default class Validate extends Command {
 	}
 
 	async getPageUrlsFromSitemap(ctx: Ctx): Promise<string[]> {
-		return await this.readSitemapUrls(ctx.config.validate.sitemap);
+		return this.readSitemapUrls(ctx.config.validate.sitemap);
 	}
 
 	/**
 	 * Read all page URLs from a sitemap file or URL.
 	 * Sitemap indexes (e.g. wp-sitemap.xml) are followed recursively.
 	 * @see https://www.sitemaps.org/protocol.html
+	 * @param sitemap Local file path or URL
+	 * @returns All page URLs found
 	 */
 	async readSitemapUrls(sitemap: string): Promise<string[]> {
 		let contents: string;
@@ -280,13 +282,13 @@ export default class Validate extends Command {
 			}
 		} else {
 			try {
-				contents = await fs.readFile(join(process.cwd(), sitemap), 'utf8');
+				contents = await fs.readFile(resolve(process.cwd(), sitemap), 'utf8');
 			} catch (error) {
 				throw new Error(`Error reading sitemap: ${error}`);
 			}
 		}
 
-		const locs = [...contents.matchAll(/<loc>\s*(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?\s*<\/loc>/gs)]
+		const locs = [...contents.matchAll(/<loc>\s*(?:<!\[CDATA\[)?(.*?)(?:]]>)?\s*<\/loc>/gs)]
 			.map(([, loc]) => decodeXmlEntities(loc.trim()))
 			.filter((loc) => isValidUrl(loc));
 
