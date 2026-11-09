@@ -1,0 +1,32 @@
+name: Validate swup.js.org
+
+# End-to-end check: `swup validate` against the docs site
+# Config in swup.config.js
+
+on:
+  push:
+    branches: [main, master, next]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Validate swup.js.org
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v6
+
+      - name: Set up node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - run: npm ci
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+
+      - name: Validate swup.js.org
+        run: ./bin/run.js validate --parallel

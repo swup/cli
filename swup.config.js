@@ -4,6 +4,7 @@ export default {
 	},
 	validate: {
 		url: 'https://swup.js.org',
+		crawl: true,
 		limit: 10
 	}
 };
