@@ -159,6 +159,8 @@ export default class Validate extends Command {
 								} catch (error) {
 									ctx.errors.push(error as Error);
 									subtask.title = chalk`{red Failed} ${getLocalUrl(url)}`;
+									// Rethrow to mark the task as failed, exitOnError: false keeps going
+									throw error;
 								}
 							}
 						})),
