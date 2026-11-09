@@ -12,7 +12,8 @@ on:
 jobs:
   validate:
     name: Validate swup.js.org
-    runs-on: ubuntu-latest
+    # Playwright 1.55 doesn't support ubuntu 26.04 (ubuntu-latest) yet
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
 
     steps:
