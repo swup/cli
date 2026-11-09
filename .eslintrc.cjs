@@ -4,7 +4,7 @@ module.exports = {
 		'eslint:recommended',
 		'oclif',
 		'oclif-typescript',
-		'plugin:prettier/recommended', // needs to be last
+		'plugin:prettier/recommended' // needs to be last
 	],
 	plugins: ['@typescript-eslint'],
 	/* First exclude everything, then re-include /src, then exclude tests */
