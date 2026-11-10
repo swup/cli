@@ -1,9 +1,7 @@
+// Mirrors swup.config.mjs in swup/docs
 export default {
 	swup: {
-		animationSelector: '[class*="swup-transition-"]'
-	},
-	validate: {
-		url: 'https://swup.js.org',
-		limit: 10
+		animationSelector: '[class*="swup-transition-"]',
+		containers: ['#swup']
 	}
 };
